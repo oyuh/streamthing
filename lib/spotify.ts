@@ -56,34 +56,40 @@ export async function refreshAccessToken(): Promise<string | null> {
   }
 }
 
-export async function getNowPlaying() {
-  const stored = await getStoredTokens();
-  if (!stored?.access_token) return null;
+export async function getNowPlaying(): Promise<{
+    track: string;
+    artist: string;
+    albumArt: string;
+    progress: number;
+    duration: number;
+  } | null> {
+    const stored = await getStoredTokens();
+    if (!stored?.access_token) return null;
 
-  try {
-    const res = await axios.get('https://api.spotify.com/v1/me/player/currently-playing', {
-      headers: { Authorization: `Bearer ${stored.access_token}` },
-    });
+    try {
+      const res = await axios.get('https://api.spotify.com/v1/me/player/currently-playing', {
+        headers: { Authorization: `Bearer ${stored.access_token}` },
+      });
 
-    if (!res.data || !res.data.item) return null;
+      if (!res.data || !res.data.item) return null;
 
-    const item = res.data.item;
+      const item = res.data.item;
 
-    return {
-      track: item.name,
-      artist: item.artists.map((a: any) => a.name).join(', '),
-      albumArt: item.album.images[0].url,
-      progress: res.data.progress_ms,
-      duration: item.duration_ms,
-    };
-  } catch (err: any) {
-    if (err.response?.status === 401) {
-      const newToken = await refreshAccessToken();
-      if (!newToken) return null;
-      return await getNowPlaying(); // retry
+      return {
+        track: item.name,
+        artist: item.artists.map((a: any) => a.name).join(', '),
+        albumArt: item.album.images[0].url,
+        progress: res.data.progress_ms,
+        duration: item.duration_ms,
+      };
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        const newToken = await refreshAccessToken();
+        if (!newToken) return null;
+        return await getNowPlaying(); // retry with new token
+      }
+
+      console.error('Spotify API Error:', err.response?.data || err.message);
+      return null;
     }
-
-    console.error('Spotify API Error:', err.response?.data || err.message);
-    return null;
   }
-}
