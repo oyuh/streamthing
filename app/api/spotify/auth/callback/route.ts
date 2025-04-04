@@ -1,3 +1,4 @@
+// app/api/spotify/auth/callback/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 import { saveTokens } from '@/lib/spotify';
@@ -15,7 +16,7 @@ export async function GET(req: NextRequest) {
     const authString = `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`;
     const base64Auth = Buffer.from(authString).toString('base64');
 
-    const res = await axios.post(
+    const tokenResponse = await axios.post(
       'https://accounts.spotify.com/api/token',
       new URLSearchParams({
         grant_type: 'authorization_code',
@@ -24,20 +25,29 @@ export async function GET(req: NextRequest) {
       }).toString(),
       {
         headers: {
-          'Authorization': `Basic ${base64Auth}`,
+          Authorization: `Basic ${base64Auth}`,
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       }
     );
 
-    const { access_token, refresh_token } = res.data;
+    const { access_token, refresh_token } = tokenResponse.data;
 
-    // ✅ Save to database for Streamlabs usage
     await saveTokens({ access_token, refresh_token });
 
     return NextResponse.redirect(new URL('/spotify', req.url));
   } catch (err: any) {
-    console.error("❌ Spotify token exchange failed:", err.response?.data || err.message);
-    return NextResponse.json({ error: 'Failed to authenticate with Spotify' }, { status: 500 });
+    console.error('❌ Spotify token exchange failed');
+    if (err.response) {
+      console.error('🎯 Response data:', err.response.data);
+      console.error('🔁 Status:', err.response.status);
+    } else {
+      console.error('⚠️ Unexpected error:', err.message);
+    }
+
+    return NextResponse.json({
+      error: 'Failed to authenticate with Spotify',
+      details: err.response?.data || err.message
+    }, { status: 500 });
   }
 }
