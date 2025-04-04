@@ -20,8 +20,7 @@ export async function GET(req: NextRequest) {
     });
 
     const userId = userRes.data.data[0].id;
-
-    await subscribeToFollows(userId);
+    await subscribeToFollows(userId, access_token); // ✅ user token
 
     return NextResponse.redirect(new URL('/events', req.url));
   } catch (e: any) {

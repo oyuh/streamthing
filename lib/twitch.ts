@@ -26,14 +26,12 @@ export async function getAppAccessToken(): Promise<string> {
     return res.data.access_token;
   }
 
-  export async function subscribeToFollows(userId: string) {
-    const appToken = await getAppAccessToken();
-
+  export async function subscribeToFollows(userId: string, userToken: string) {
     return await axios.post(
       'https://api.twitch.tv/helix/eventsub/subscriptions',
       {
         type: 'channel.follow',
-        version: '1', // ✅ downgrade from v2
+        version: '1',
         condition: {
           broadcaster_user_id: userId,
         },
@@ -46,7 +44,7 @@ export async function getAppAccessToken(): Promise<string> {
       {
         headers: {
           'Client-ID': process.env.TWITCH_CLIENT_ID!,
-          Authorization: `Bearer ${appToken}`,
+          Authorization: `Bearer ${userToken}`, // ✅ not app token anymore
           'Content-Type': 'application/json',
         },
       }
