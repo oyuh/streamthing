@@ -1,4 +1,3 @@
-// app/api/spotify/auth/callback/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 import { saveTokens } from '@/lib/spotify';
@@ -8,39 +7,37 @@ export async function GET(req: NextRequest) {
   const code = url.searchParams.get("code");
 
   if (!code) {
-    console.error("❌ Missing code from Spotify");
+    console.error("❌ Missing authorization code");
     return NextResponse.json({ error: "Missing code" }, { status: 400 });
   }
 
   try {
-    const payload = new URLSearchParams({
-      code,
-      redirect_uri: process.env.SPOTIFY_REDIRECT_URI!,
-      grant_type: 'authorization_code',
-    });
+    const authString = `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`;
+    const base64Auth = Buffer.from(authString).toString('base64');
 
-    const encodedAuth = Buffer.from(
-      `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
-    ).toString('base64');
-
-    const response = await axios.post(
+    const res = await axios.post(
       'https://accounts.spotify.com/api/token',
-      payload.toString(),
+      new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: process.env.SPOTIFY_REDIRECT_URI!,
+      }).toString(),
       {
         headers: {
+          'Authorization': `Basic ${base64Auth}`,
           'Content-Type': 'application/x-www-form-urlencoded',
-          Authorization: `Basic ${encodedAuth}`,
         },
       }
     );
 
-    const { access_token, refresh_token } = response.data;
+    const { access_token, refresh_token } = res.data;
 
+    // ✅ Save to database for Streamlabs usage
     await saveTokens({ access_token, refresh_token });
 
     return NextResponse.redirect(new URL('/spotify', req.url));
-  } catch (error: any) {
-    console.error('❌ Spotify token exchange error:', error.response?.data || error.message);
+  } catch (err: any) {
+    console.error("❌ Spotify token exchange failed:", err.response?.data || err.message);
     return NextResponse.json({ error: 'Failed to authenticate with Spotify' }, { status: 500 });
   }
 }
