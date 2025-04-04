@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { getAppAccessToken } from './twitch';
 
 export async function getTwitchAccessToken(code: string) {
   const res = await axios.post(
