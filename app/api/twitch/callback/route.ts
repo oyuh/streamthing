@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
-import { getTwitchAccessToken, subscribeToFollows } from '@/lib/twitch';
+import { getTwitchAccessToken, getTwitchUser, subscribeToStreamOnline } from '@/lib/twitch';
+
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
@@ -11,20 +12,21 @@ export async function GET(req: NextRequest) {
   try {
     const { access_token } = await getTwitchAccessToken(code);
 
-    // Get your own Twitch user ID
-    const userRes = await axios.get('https://api.twitch.tv/helix/users', {
-      headers: {
-        'Client-ID': process.env.TWITCH_CLIENT_ID!,
-        Authorization: `Bearer ${access_token}`,
-      },
-    });
+    // ✅ Fetch user info using the token
+    const user = await getTwitchUser(access_token);
 
-    const userId = userRes.data.data[0].id;
-    await subscribeToFollows(userId, access_token); // ✅ user token
+    console.log("🎯 Twitch user:", user);
+    console.log("🔑 Token (start):", access_token.slice(0, 10));
+
+    // ✅ Use new stream.online fallback
+    await subscribeToStreamOnline(user.id, access_token);
 
     return NextResponse.redirect(new URL('/events', req.url));
-  } catch (e: any) {
-    console.error('Twitch auth error:', e.response?.data || e.message);
-    return NextResponse.json({ error: 'Failed to setup Twitch', details: e.response?.data }, { status: 500 });
+  } catch (error: any) {
+    console.error('Twitch auth error:', error.response?.data || error.message);
+    return NextResponse.json(
+      { error: 'Failed to setup Twitch', details: error.response?.data || error.message },
+      { status: 500 }
+    );
   }
 }
