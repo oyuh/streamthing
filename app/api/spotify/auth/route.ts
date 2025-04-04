@@ -1,10 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
+// app/api/spotify/auth/route.ts
+import { NextResponse } from 'next/server';
 
-export async function GET(req: NextRequest) {
-  const scope = 'user-read-currently-playing';
-  const clientId = process.env.SPOTIFY_CLIENT_ID!;
-  const redirectUri = process.env.SPOTIFY_REDIRECT_URI!;
-  const authURL = `https://accounts.spotify.com/authorize?response_type=code&client_id=${clientId}&scope=${scope}&redirect_uri=${redirectUri}`;
+export async function GET() {
+  const params = new URLSearchParams({
+    client_id: process.env.SPOTIFY_CLIENT_ID!,
+    response_type: 'code',
+    redirect_uri: process.env.SPOTIFY_REDIRECT_URI!,
+    scope: 'user-read-currently-playing',
+  });
 
-  return NextResponse.redirect(authURL);
+  return NextResponse.redirect(`https://accounts.spotify.com/authorize?${params.toString()}`);
 }

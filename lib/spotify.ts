@@ -1,74 +1,89 @@
 import axios from 'axios';
-import { cookies } from 'next/headers';
+import { db } from '@/lib/db/client';
+import { spotifyTokens } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
 
-export async function getNowPlaying() {
-  const cookieStore = await cookies();
-  const accessToken = cookieStore.get('spotify_access_token')?.value || '';
+export async function getStoredTokens() {
+  const tokens = await db.select().from(spotifyTokens).where(eq(spotifyTokens.id, 'singleton')).limit(1);
+  return tokens[0] || null;
+}
 
-  if (!accessToken) {
-    console.log('❌ No access token found in cookies.');
-    return null;
+export async function saveTokens({ access_token, refresh_token }: { access_token: string, refresh_token?: string }) {
+  const existing = await getStoredTokens();
+
+  if (existing) {
+    await db.update(spotifyTokens)
+      .set({
+        access_token,
+        ...(refresh_token ? { refresh_token } : {}),
+        updated_at: new Date(),
+      })
+      .where(eq(spotifyTokens.id, 'singleton'));
+  } else {
+    await db.insert(spotifyTokens).values({
+      id: 'singleton',
+      access_token,
+      refresh_token: refresh_token || '',
+      updated_at: new Date(),
+    });
   }
+}
+
+export async function refreshAccessToken(): Promise<string | null> {
+  const stored = await getStoredTokens();
+  if (!stored?.refresh_token) return null;
 
   try {
-    const result = await axios.get("https://api.spotify.com/v1/me/player/currently-playing", {
-      headers: {
-        Authorization: `Bearer ${accessToken}`
+    const res = await axios.post(
+      'https://accounts.spotify.com/api/token',
+      new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: stored.refresh_token,
+        client_id: process.env.SPOTIFY_CLIENT_ID!,
+        client_secret: process.env.SPOTIFY_CLIENT_SECRET!,
+      }).toString(),
+      {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       }
-    });
+    );
 
-    if (!result.data || !result.data.item) return null;
-
-    const item = result.data.item;
-
-    return {
-      track: item.name,
-      artist: item.artists.map((a: any) => a.name).join(", "),
-      albumArt: item.album.images[0].url,
-      progress: result.data.progress_ms,
-      duration: item.duration_ms
-    };
-  } catch (error: any) {
-    if (error.response?.status === 401) return 'expired';
-    console.error("⚠️ Spotify API error:", error.response?.data || error.message);
+    const { access_token } = res.data;
+    await saveTokens({ access_token });
+    return access_token;
+  } catch (err: any) {
+    console.error('Failed to refresh token:', err.response?.data || err.message);
     return null;
   }
 }
 
-export async function refreshAccessToken() {
-  const cookieStore = await cookies();
-  const refreshToken = cookieStore.get('spotify_refresh_token')?.value || '';
-
-  if (!refreshToken) {
-    console.log('❌ No refresh token found.');
-    return null;
-  }
+export async function getNowPlaying() {
+  const stored = await getStoredTokens();
+  if (!stored?.access_token) return null;
 
   try {
-    const result = await axios.post(
-      'https://accounts.spotify.com/api/token',
-      new URLSearchParams({
-        grant_type: 'refresh_token',
-        refresh_token: refreshToken,
-        client_id: process.env.SPOTIFY_CLIENT_ID!,
-        client_secret: process.env.SPOTIFY_CLIENT_SECRET!
-      }).toString(),
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        }
-      });
-
-    const newToken = result.data.access_token;
-    cookieStore.set('spotify_access_token', newToken, {
-      path: '/',
-      httpOnly: true,
+    const res = await axios.get('https://api.spotify.com/v1/me/player/currently-playing', {
+      headers: { Authorization: `Bearer ${stored.access_token}` },
     });
 
-    console.log('🔄 Spotify access token refreshed.');
-    return newToken;
+    if (!res.data || !res.data.item) return null;
+
+    const item = res.data.item;
+
+    return {
+      track: item.name,
+      artist: item.artists.map((a: any) => a.name).join(', '),
+      albumArt: item.album.images[0].url,
+      progress: res.data.progress_ms,
+      duration: item.duration_ms,
+    };
   } catch (err: any) {
-    console.error('❌ Failed to refresh token:', err.response?.data || err.message);
+    if (err.response?.status === 401) {
+      const newToken = await refreshAccessToken();
+      if (!newToken) return null;
+      return await getNowPlaying(); // retry
+    }
+
+    console.error('Spotify API Error:', err.response?.data || err.message);
     return null;
   }
 }
