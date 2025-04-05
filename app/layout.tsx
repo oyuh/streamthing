@@ -1,3 +1,5 @@
+import './globals.css';
+
 export const metadata = {
   title: 'stream shit lol',
   description: 'made by lawson hart!',

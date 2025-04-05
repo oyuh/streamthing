@@ -1,7 +1,7 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
-import { getTwitchAccessToken, getTwitchUser, subscribeToStreamOnline } from '@/lib/twitch';
-
+import { getTwitchAccessToken, getTwitchUser, subscribeToTwitchEvents } from '@/lib/twitch';
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
@@ -12,14 +12,12 @@ export async function GET(req: NextRequest) {
   try {
     const { access_token } = await getTwitchAccessToken(code);
 
-    // ✅ Fetch user info using the token
     const user = await getTwitchUser(access_token);
 
     console.log("🎯 Twitch user:", user);
     console.log("🔑 Token (start):", access_token.slice(0, 10));
 
-    // ✅ Use new stream.online fallback
-    await subscribeToStreamOnline(user.id, access_token);
+    await subscribeToTwitchEvents(user, access_token);
 
     return NextResponse.redirect(new URL('/events', req.url));
   } catch (error: any) {

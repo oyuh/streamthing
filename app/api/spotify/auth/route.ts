@@ -6,7 +6,11 @@ export async function GET() {
     client_id: process.env.SPOTIFY_CLIENT_ID!,
     response_type: 'code',
     redirect_uri: process.env.SPOTIFY_REDIRECT_URI!,
-    scope: 'user-read-currently-playing',
+    scope: [
+      'user-read-currently-playing',
+      'user-read-playback-state',
+      'user-modify-playback-state', // ✅ This is what enables queueing
+    ].join(' '),
   });
 
   return NextResponse.redirect(`https://accounts.spotify.com/authorize?${params.toString()}`);

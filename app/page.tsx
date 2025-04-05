@@ -30,18 +30,10 @@ export default function Home() {
 
   if (!discordUser) {
     return (
-      <div style={{ backgroundColor: '#121212', color: 'white', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="min-h-screen bg-zinc-900 flex items-center justify-center text-white">
         <a
           href="/api/discord/login"
-          style={{
-            padding: '12px 24px',
-            backgroundColor: '#5865F2',
-            borderRadius: '8px',
-            color: 'white',
-            fontWeight: 600,
-            textDecoration: 'none',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
-          }}
+          className="bg-indigo-600 hover:bg-indigo-500 px-6 py-3 rounded-lg text-white font-semibold shadow-lg transition"
         >
           Login with Discord
         </a>
@@ -50,84 +42,54 @@ export default function Home() {
   }
 
   return (
-    <div
-      style={{
-        height: '100vh',
-        backgroundColor: '#121212',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '20px',
-        color: 'white',
-        fontFamily: 'Segoe UI, sans-serif'
-      }}
-    >
-      <h1 style={{ fontSize: '2rem' }}>Welcome, {discordUser.username}!</h1>
+    <div className="min-h-screen bg-gradient-to-br from-zinc-900 to-black text-white flex flex-col items-center justify-center gap-6 px-4 py-12 font-sans">
+      <h1 className="text-3xl font-bold text-center drop-shadow-md">
+        Welcome, {discordUser.username}!
+      </h1>
 
-      <a
-        href="/api/spotify/auth?login=true"
-        style={{
-          padding: '10px 20px',
-          backgroundColor: '#1DB954',
-          color: 'white',
-          border: 'none',
-          borderRadius: '8px',
-          textDecoration: 'none',
-          fontSize: '16px',
-          boxShadow: '0 4px 10px rgba(0,0,0,0.4)',
-        }}
-      >
-        Connect Spotify
-      </a>
+      <div className="grid gap-4 w-full max-w-md">
+        <a
+          href="/api/spotify/auth?login=true"
+          className="block bg-green-500 hover:bg-green-600 text-black font-bold text-center py-3 rounded-lg shadow-lg transition"
+        >
+          Connect Spotify
+        </a>
 
-      <a
-        href="/api/twitch/auth"
-        style={{
-          padding: '10px 20px',
-          backgroundColor: '#9146FF',
-          color: 'white',
-          border: 'none',
-          borderRadius: '8px',
-          textDecoration: 'none',
-          fontSize: '16px',
-          boxShadow: '0 4px 10px rgba(0,0,0,0.4)',
-        }}
-      >
-        Connect Twitch
-      </a>
+        <a
+          href="/api/twitch/auth"
+          className="block bg-purple-600 hover:bg-purple-700 text-white font-bold text-center py-3 rounded-lg shadow-lg transition"
+        >
+          Connect Twitch
+        </a>
 
-      <a
-        href="/spotify"
-        style={{
-          padding: '10px 20px',
-          backgroundColor: '#535353',
-          color: 'white',
-          border: 'none',
-          borderRadius: '8px',
-          textDecoration: 'none',
-          fontSize: '16px',
-          boxShadow: '0 4px 10px rgba(0,0,0,0.4)',
-        }}
-      >
-        View Spotify Overlay
-      </a>
+        <a
+          href="/spotify"
+          className="block bg-zinc-700 hover:bg-zinc-600 text-white font-bold text-center py-3 rounded-lg shadow-lg transition"
+        >
+          View Spotify Overlay
+        </a>
 
-      <a
-        href="/events"
-        style={{
-          padding: '10px 20px',
-          backgroundColor: '#333',
-          color: 'white',
-          border: 'none',
-          borderRadius: '8px',
-          textDecoration: 'none',
-          fontSize: '16px',
-          boxShadow: '0 4px 10px rgba(0,0,0,0.4)',
-        }}
-      >
-        View Twitch Event Overlay
-      </a>
+        <a
+          href="/events"
+          className="block bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-center py-3 rounded-lg shadow-lg transition"
+        >
+          View Twitch Event Overlay
+        </a>
+
+        <a
+          href="/request-song"
+          className="block bg-lime-500 hover:bg-lime-600 text-black font-bold text-center py-3 rounded-lg shadow-lg transition"
+        >
+          Request a Song
+        </a>
+
+        <a
+          href="/requests"
+          className="block bg-red-500 hover:bg-red-600 text-white font-bold text-center py-3 rounded-lg shadow-lg transition"
+        >
+          Mod Panel: Song Requests
+        </a>
+      </div>
     </div>
   );
 }
