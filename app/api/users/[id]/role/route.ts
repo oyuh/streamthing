@@ -3,12 +3,17 @@ import { db } from '@/lib/db/client';
 import { userRoles } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
-// Use standard Request type instead of NextRequest
+interface RouteSegmentParams {
+  params: {
+    id: string;
+  }
+}
+
 export async function GET(
-  request: Request,
-  context: { params: { id: string } }
+  req: NextRequest,
+  { params }: RouteSegmentParams
 ) {
-  const { id } = context.params;
+  const { id } = params;
 
   if (!id) {
     return NextResponse.json({ error: 'Missing user ID' }, { status: 400 });
@@ -28,16 +33,16 @@ export async function GET(
 }
 
 export async function PATCH(
-  request: Request,
-  context: { params: { id: string } }
+  req: NextRequest,
+  { params }: RouteSegmentParams
 ) {
-  const { id } = context.params;
+  const { id } = params;
 
   if (!id) {
     return NextResponse.json({ error: 'Missing user ID' }, { status: 400 });
   }
 
-  const { isModerator, isBanned } = await request.json();
+  const { isModerator, isBanned } = await req.json();
 
   if (typeof isModerator !== 'boolean' && typeof isBanned !== 'boolean') {
     return NextResponse.json({ error: 'No valid fields provided for update' }, { status: 400 });
