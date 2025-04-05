@@ -10,7 +10,6 @@ type SongRequest = {
   status: string;
   title: string | null;
   artist: string | null;
-
 };
 
 export default function SongRequestModerationPage() {
@@ -26,13 +25,16 @@ export default function SongRequestModerationPage() {
       .then(user => {
         if (!user?.id) return setUnauthorized(true);
 
-        const allowedIds = process.env.NEXT_PUBLIC_ALLOWED_DISCORD_USERS?.split(',') || [];
-        if (!allowedIds.includes(user.id)) {
-          setUnauthorized(true);
-        } else {
-          setDiscordUser(user);
-          fetchRequests();
-        }
+        fetch(`/api/users/${user.id}/role`)
+          .then(res => res.json())
+          .then(role => {
+            if (role?.isBanned || !role?.isModerator) {
+              setUnauthorized(true);
+            } else {
+              setDiscordUser(user);
+              fetchRequests();
+            }
+          });
       });
   }, []);
 
@@ -57,7 +59,7 @@ export default function SongRequestModerationPage() {
     });
 
     if (res.ok) {
-      setRequests((prev) => prev.filter((r) => r.id !== id));
+      setRequests(prev => prev.filter(r => r.id !== id));
     } else {
       const data = await res.json();
       setError(data.error || 'Failed to update request');
@@ -95,29 +97,23 @@ export default function SongRequestModerationPage() {
         </h1>
 
         {error && (
-          <div className="bg-red-500 text-white p-4 rounded-lg mb-4">
-            {error}
-          </div>
+          <div className="bg-red-500 text-white p-4 rounded-lg mb-4">{error}</div>
         )}
 
         {requests.length === 0 ? (
           <p className="text-zinc-400 text-center">No pending song requests.</p>
         ) : (
           <ul className="space-y-4">
-            {requests.map((req) => (
+            {requests.map(req => (
               <li
                 key={req.id}
                 className="bg-white/5 border border-white/10 rounded-xl p-5 backdrop-blur-md shadow flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
               >
                 <div className="space-y-1">
                   <p className="font-semibold text-white">
-                    {req.title
-                      ? `${req.title} – ${req.artist}`
-                      : 'Unknown Title'}
+                    {req.title ? `${req.title} – ${req.artist}` : 'Unknown Title'}
                   </p>
-                  <p className="text-sm text-zinc-400">
-                    Requested by {req.requestedBy}
-                  </p>
+                  <p className="text-sm text-zinc-400">Requested by {req.requestedBy}</p>
                 </div>
 
                 <div className="flex gap-3 mt-2 sm:mt-0">

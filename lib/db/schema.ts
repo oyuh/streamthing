@@ -34,3 +34,11 @@ export const twitchEvents = pgTable('twitch_events', {
     status: text('status').default('pending'), // pending | approved | rejected
     createdAt: timestamp('created_at').defaultNow(),
   });
+
+  export const userRoles = pgTable('user_roles', {
+    id: text('id').primaryKey(), // Discord ID
+    username: text('username'),
+    isModerator: boolean('is_moderator').default(false),
+    isBanned: boolean('is_banned').default(false),
+    createdAt: timestamp('created_at').defaultNow(),
+  });

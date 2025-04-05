@@ -1,7 +1,9 @@
-// app/api/discord/callback/route.ts
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
+import { db } from '@/lib/db/client';
+import { userRoles } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
@@ -36,14 +38,27 @@ export async function GET(req: NextRequest) {
 
     const user = userInfo.data;
 
-    const cookieStore = await cookies(); // 👈 FIX HERE
-    cookieStore.set('discord_user', JSON.stringify({
-      id: user.id,
-      username: user.username,
-    }), {
+    const cookieStore = cookies();
+    cookieStore.set('discord_user', JSON.stringify({ id: user.id, username: user.username }), {
       httpOnly: true,
       path: '/',
     });
+
+    // ✅ Insert or update user in DB
+    const existing = await db.select().from(userRoles).where(eq(userRoles.id, user.id)).limit(1);
+    if (existing.length > 0) {
+      await db.update(userRoles).set({ username: user.username }).where(eq(userRoles.id, user.id));
+    } else {
+        await db.insert(userRoles)
+        .values({
+          id: user.id,
+          username: user.username,
+        })
+        .onConflictDoUpdate({
+          target: userRoles.id,
+          set: { username: user.username },
+        });
+    }
 
     return NextResponse.redirect(new URL('/', req.url));
   } catch (error: any) {

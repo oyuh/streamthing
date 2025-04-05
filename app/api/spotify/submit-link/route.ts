@@ -4,14 +4,29 @@ import { getSpotifyAccessTokenFromDB, refreshAccessToken } from '@/lib/spotify';
 import { db } from '@/lib/db/client';
 import { songRequests } from '@/lib/db/schema';
 
+const rateLimitMap = new Map<string, number>();
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const last = rateLimitMap.get(ip) || 0;
+  if (now - last < 5000) return true; // 5 seconds between requests
+  rateLimitMap.set(ip, now);
+  return false;
+}
 
 export async function POST(req: NextRequest) {
+
   const { link, requestedBy } = await req.json();
 
   const trackId = link?.split('/track/')[1]?.split('?')[0];
   if (!trackId) {
     return NextResponse.json({ error: 'Invalid Spotify track link' }, { status: 400 });
   }
+
+  const ip = req.headers.get('x-forwarded-for') || 'unknown';
+if (isRateLimited(ip)) {
+  return NextResponse.json({ error: 'Too many requests. Please wait.' }, { status: 429 });
+}
 
   let accessToken = await getSpotifyAccessTokenFromDB();
   if (!accessToken) {

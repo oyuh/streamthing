@@ -11,13 +11,16 @@ export default function Home() {
       .then(res => res.json())
       .then(data => {
         if (data && data.username) {
-          const allowedIds = process.env.NEXT_PUBLIC_ALLOWED_DISCORD_USERS?.split(',') || [];
-          if (!allowedIds.includes(data.id)) {
-            setUnauthorized(true);
-          } else {
-            setDiscordUser(data);
+            fetch(`/api/users/${data.id}/role`)
+              .then(res => res.json())
+              .then(role => {
+                if (!role?.isModerator) {
+                  setUnauthorized(true);
+                } else {
+                  setDiscordUser(data);
+                }
+              });
           }
-        }
       });
   }, []);
 
@@ -88,6 +91,12 @@ export default function Home() {
           className="block bg-red-500 hover:bg-red-600 text-white font-bold text-center py-3 rounded-lg shadow-lg transition"
         >
           Mod Panel: Song Requests
+        </a>
+        <a
+          href="/admin/users"
+          className="block bg-blue-500 hover:bg-blue-600 text-white font-bold text-center py-3 rounded-lg shadow-lg transition"
+        >
+          Mod Panel: Users
         </a>
       </div>
     </div>
