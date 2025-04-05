@@ -4,8 +4,8 @@ import { userRoles } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
+export async function GET(_req: Request, context: any) {
+  const id = context.params?.id;
 
   if (!id) {
     return NextResponse.json({ error: 'Missing user ID' }, { status: 400 });
@@ -30,8 +30,8 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   }
 }
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
+export async function PATCH(req: Request, context: any) {
+  const id = context.params?.id;
 
   if (!id) {
     return NextResponse.json({ error: 'Missing user ID' }, { status: 400 });
