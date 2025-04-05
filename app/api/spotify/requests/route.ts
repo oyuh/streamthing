@@ -28,7 +28,8 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid request data' }, { status: 400 });
   }
 
-  const cookieStore = cookies();
+  // ✅ Fix: Await cookies() for Vercel compatibility
+  const cookieStore = await cookies();
   const userCookie = cookieStore.get('discord_user');
 
   if (!userCookie) {
