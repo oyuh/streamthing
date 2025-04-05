@@ -3,13 +3,11 @@ import { db } from '@/lib/db/client';
 import { userRoles } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
-// Remove the custom Context interface and use the proper Next.js types
-type RouteParams = { params: { id: string } };
-
+// Remove the custom type definition
 export async function GET(
-  req: NextRequest,
-  { params }: RouteParams
-) {
+  request: NextRequest,
+  { params }: { params: { id: string } }
+): Promise<NextResponse> {
   const { id } = params;
 
   if (!id) {
@@ -30,16 +28,16 @@ export async function GET(
 }
 
 export async function PATCH(
-  req: NextRequest,
-  { params }: RouteParams
-) {
+  request: NextRequest,
+  { params }: { params: { id: string } }
+): Promise<NextResponse> {
   const { id } = params;
 
   if (!id) {
     return NextResponse.json({ error: 'Missing user ID' }, { status: 400 });
   }
 
-  const { isModerator, isBanned } = await req.json();
+  const { isModerator, isBanned } = await request.json();
 
   if (typeof isModerator !== 'boolean' && typeof isBanned !== 'boolean') {
     return NextResponse.json({ error: 'No valid fields provided for update' }, { status: 400 });
