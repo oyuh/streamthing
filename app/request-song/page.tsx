@@ -6,14 +6,28 @@ export default function RequestSongPage() {
   const [link, setLink] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
-  const [discordUser, setDiscordUser] = useState<{ id: string; username: string } | null>(null);
+  const [user, setUser] = useState<{ id: string; username: string } | null>(null);
+  const [isBanned, setIsBanned] = useState(false);
 
   useEffect(() => {
-    fetch('/api/user')
-      .then(res => res.json())
-      .then(data => {
-        if (data?.username) setDiscordUser(data);
-      });
+    async function checkUser() {
+      const res = await fetch('/api/user');
+      const data = await res.json();
+
+      if (data?.id) {
+        // Check ban status
+        const roleRes = await fetch(`/api/users/${data.id}/role`);
+        const roleData = await roleRes.json();
+
+        if (roleData?.isBanned) {
+          setIsBanned(true);
+        } else {
+          setUser(data);
+        }
+      }
+    }
+
+    checkUser();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -27,7 +41,7 @@ export default function RequestSongPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           link,
-          requestedBy: discordUser?.username || 'guest',
+          requestedBy: user?.username || 'guest',
         }),
       });
 
@@ -49,43 +63,50 @@ export default function RequestSongPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-zinc-950 to-black text-white flex items-center justify-center p-4">
-      <div className="w-full max-w-xl bg-zinc-900 border border-zinc-700/50 backdrop-blur-sm shadow-xl rounded-2xl p-8 space-y-6">
-        <h1 className="text-3xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-lime-500">
+    <div className="min-h-screen bg-gradient-to-br from-black to-zinc-900 text-white flex items-center justify-center p-6">
+      <div className="w-full max-w-xl bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl p-8 space-y-6">
+        <h1 className="text-3xl font-extrabold text-center bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-lime-500 drop-shadow">
           🎵 Submit a Song Request
         </h1>
 
-        {!discordUser ? (
+        {!user && !isBanned && (
           <div className="text-center space-y-4">
-            <p className="text-zinc-400">You must be logged in with Discord to request a song.</p>
+            <p className="text-zinc-300">You must be logged in with Discord to request a song.</p>
             <a
               href="/api/discord/login"
-              className="inline-block bg-indigo-600 hover:bg-indigo-500 px-6 py-2 rounded-lg font-semibold text-white transition"
+              className="inline-block bg-indigo-600 hover:bg-indigo-500 transition px-6 py-2 rounded-lg text-white font-semibold"
             >
               Login with Discord
             </a>
           </div>
-        ) : (
+        )}
+
+        {isBanned && (
+          <div className="text-center text-red-400 font-semibold">
+            🚫 You are banned from submitting song requests.
+          </div>
+        )}
+
+        {user && !isBanned && (
           <form onSubmit={handleSubmit} className="space-y-4">
             <input
-              type="url"
+              type="text"
               value={link}
               onChange={(e) => setLink(e.target.value)}
               placeholder="Paste your Spotify track link..."
-              className="w-full px-4 py-3 rounded-lg bg-zinc-800 text-white placeholder-zinc-500 border border-zinc-700 focus:ring-2 focus:ring-green-400 focus:outline-none transition"
+              className="w-full px-5 py-3 rounded-lg bg-zinc-800 text-white border border-zinc-700 focus:ring-2 focus:ring-green-400 transition outline-none"
               required
             />
-
             <button
               type="submit"
+              className="w-full bg-green-500 hover:bg-green-600 py-3 px-6 rounded-lg text-black font-bold transition"
               disabled={status === 'loading'}
-              className="w-full bg-green-500 hover:bg-green-600 text-black font-bold py-3 rounded-lg transition"
             >
               {status === 'loading' ? 'Submitting...' : 'Submit'}
             </button>
 
             {status === 'success' && (
-              <p className="text-green-400 text-center">✅ Song request submitted!</p>
+              <p className="text-green-400 text-center">✅ Song request submitted successfully!</p>
             )}
             {status === 'error' && (
               <p className="text-red-400 text-center">❌ {errorMsg}</p>
