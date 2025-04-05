@@ -3,12 +3,14 @@ import { db } from '@/lib/db/client';
 import { userRoles } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
-interface Context {
-  params: { id: string };
-}
+// Remove the custom Context interface and use the proper Next.js types
+type RouteParams = { params: { id: string } };
 
-export async function GET(req: NextRequest, context: Context) {
-  const { id } = context.params;
+export async function GET(
+  req: NextRequest,
+  { params }: RouteParams
+) {
+  const { id } = params;
 
   if (!id) {
     return NextResponse.json({ error: 'Missing user ID' }, { status: 400 });
@@ -27,8 +29,11 @@ export async function GET(req: NextRequest, context: Context) {
   return NextResponse.json(user);
 }
 
-export async function PATCH(req: NextRequest, context: Context) {
-  const { id } = context.params;
+export async function PATCH(
+  req: NextRequest,
+  { params }: RouteParams
+) {
+  const { id } = params;
 
   if (!id) {
     return NextResponse.json({ error: 'Missing user ID' }, { status: 400 });
