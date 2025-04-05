@@ -3,14 +3,22 @@ import { db } from '@/lib/db/client';
 import { userRoles } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
-  const id = params.id;
+// GET route to fetch user role information
+export async function GET(
+  req: NextRequest,
+  context: { params: { id: string } }
+) {
+  const id = context.params.id;
 
   if (!id) {
     return NextResponse.json({ error: 'Missing user ID' }, { status: 400 });
   }
 
-  const [user] = await db.select().from(userRoles).where(eq(userRoles.id, id)).limit(1);
+  const [user] = await db
+    .select()
+    .from(userRoles)
+    .where(eq(userRoles.id, id))
+    .limit(1);
 
   if (!user) {
     return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -19,8 +27,12 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   return NextResponse.json(user);
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const id = params.id;
+// PATCH route to update user role
+export async function PATCH(
+  req: NextRequest,
+  context: { params: { id: string } }
+) {
+  const id = context.params.id;
 
   if (!id) {
     return NextResponse.json({ error: 'Missing user ID' }, { status: 400 });
@@ -29,7 +41,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const { isModerator, isBanned } = await req.json();
 
   if (typeof isModerator !== 'boolean' && typeof isBanned !== 'boolean') {
-    return NextResponse.json({ error: 'No valid fields provided for update' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'No valid fields provided for update' },
+      { status: 400 }
+    );
   }
 
   await db
