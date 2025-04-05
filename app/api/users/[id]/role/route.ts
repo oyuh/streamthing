@@ -3,12 +3,12 @@ import { db } from '@/lib/db/client';
 import { userRoles } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
-// Remove the custom type definition
+// Use standard Request type instead of NextRequest
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-): Promise<NextResponse> {
-  const { id } = params;
+  request: Request,
+  context: { params: { id: string } }
+) {
+  const { id } = context.params;
 
   if (!id) {
     return NextResponse.json({ error: 'Missing user ID' }, { status: 400 });
@@ -28,10 +28,10 @@ export async function GET(
 }
 
 export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-): Promise<NextResponse> {
-  const { id } = params;
+  request: Request,
+  context: { params: { id: string } }
+) {
+  const { id } = context.params;
 
   if (!id) {
     return NextResponse.json({ error: 'Missing user ID' }, { status: 400 });
