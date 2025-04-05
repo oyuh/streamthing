@@ -3,14 +3,13 @@ import { db } from '@/lib/db/client';
 import { userRoles } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
-export async function GET(
-  req: NextRequest,
-  context: { params: Record<string, string | string[]> }
-) {
-  const id = context.params.id;
+type Params = { id: string };
 
-  if (typeof id !== 'string') {
-    return NextResponse.json({ error: 'Invalid or missing user ID' }, { status: 400 });
+export async function GET(req: NextRequest, { params }: { params: Params }) {
+  const id = params.id;
+
+  if (!id) {
+    return NextResponse.json({ error: 'Missing user ID' }, { status: 400 });
   }
 
   const [user] = await db
@@ -26,14 +25,11 @@ export async function GET(
   return NextResponse.json(user);
 }
 
-export async function PATCH(
-  req: NextRequest,
-  context: { params: Record<string, string | string[]> }
-) {
-  const id = context.params.id;
+export async function PATCH(req: NextRequest, { params }: { params: Params }) {
+  const id = params.id;
 
-  if (typeof id !== 'string') {
-    return NextResponse.json({ error: 'Invalid or missing user ID' }, { status: 400 });
+  if (!id) {
+    return NextResponse.json({ error: 'Missing user ID' }, { status: 400 });
   }
 
   const { isModerator, isBanned } = await req.json();
