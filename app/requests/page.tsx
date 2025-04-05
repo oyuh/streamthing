@@ -113,7 +113,7 @@ export default function SongRequestModerationPage() {
                   <p className="font-semibold text-white">
                     {req.title
                       ? `${req.title} – ${req.artist}`
-                      : req.link}
+                      : 'Unknown Title'}
                   </p>
                   <p className="text-sm text-zinc-400">
                     Requested by {req.requestedBy}

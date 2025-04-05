@@ -15,13 +15,15 @@ export const twitchEvents = pgTable('twitch_events', {
     createdAt: timestamp('created_at').defaultNow().notNull(),
   });
 
+
   export const songRequests = pgTable('song_requests', {
-    id: serial('id').primaryKey(),
-    spotifyUri: text('spotify_uri').notNull(), // e.g. spotify:track:xyz123
+    id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+    spotifyUri: text('spotify_uri').notNull(),
     title: text('title').notNull(),
     artist: text('artist').notNull(),
-    requestedBy: text('requested_by').notNull(), // from Twitch username
+    requestedBy: text('requested_by').notNull(),
     approved: boolean('approved').default(false),
+    rejected: boolean('rejected').default(false),
     createdAt: timestamp('created_at').defaultNow(),
   });
 
