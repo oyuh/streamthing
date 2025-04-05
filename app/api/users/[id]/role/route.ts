@@ -3,10 +3,12 @@ import { db } from '@/lib/db/client';
 import { userRoles } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
-type Params = { id: string };
+interface Context {
+  params: { id: string };
+}
 
-export async function GET(req: NextRequest, { params }: { params: Params }) {
-  const id = params.id;
+export async function GET(req: NextRequest, context: Context) {
+  const { id } = context.params;
 
   if (!id) {
     return NextResponse.json({ error: 'Missing user ID' }, { status: 400 });
@@ -25,8 +27,8 @@ export async function GET(req: NextRequest, { params }: { params: Params }) {
   return NextResponse.json(user);
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: Params }) {
-  const id = params.id;
+export async function PATCH(req: NextRequest, context: Context) {
+  const { id } = context.params;
 
   if (!id) {
     return NextResponse.json({ error: 'Missing user ID' }, { status: 400 });
