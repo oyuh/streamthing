@@ -1,164 +1,171 @@
+# 🎧 Spotify Song Request Panel
 
-# 🎧 Spotify + 🟣 Twitch Overlay (StreamThing)
+A full-stack web app that lets users submit Spotify song links for approval via a clean frontend UI. Moderators can approve or reject requests, ban/unban users, and manage user roles — all protected with Discord OAuth2. Supports external integration with a simple API for use in bots or companion tools.
 
-A slick, dark-mode-ready stream overlay that shows:
-
-- ✅ Currently playing Spotify track
-- ✅ Live Twitch stream status (via EventSub)
-- ✅ Real-time updates
-- ✅ Designed for Streamlabs / OBS browser sources
-- ✅ Discord-authenticated control panel
-
----
-
-## 🚀 Features
-
-- 🎵 **Spotify Widget**
-  Shows currently playing song with title, artist, and album cover.
-
-- 🟣 **Twitch Integration**
-  Uses `stream.online` EventSub webhook to display live status.
-
-- 🔐 **Discord Login System**
-  Only you can connect Spotify & Twitch through the dashboard.
-
-- 🖼️ **Streamlabs-Ready**
-  All overlays render on full-screen dark background, with optional transparency.
+Built with:
+- 🔥 Next.js 15 (App Router)
+- 🐘 PostgreSQL (Vercel/Neon)
+- 🎵 Spotify API
+- 🧑‍💻 Discord OAuth2
+- 🎨 TailwindCSS
+- 🍡 Drizzle ORM
 
 ---
 
-## 📦 Tech Stack
+## ✨ Features
 
-- [Next.js 15+](https://nextjs.org)
-- TypeScript
-- Drizzle ORM + Neon Postgres
-- Spotify Web API
-- Twitch EventSub Webhooks
-- Discord OAuth2 (for just general access to everything)
-- TailwindCSS / Inline Styles (kinda)
+- 🔐 Discord Login (OAuth2)
+- 🎵 Submit Spotify song links
+- 🧑‍⚖️ Admin panel to manage user roles
+- ✅ Moderators can approve/deny requests
+- ❌ Banned users cannot submit
+- 📃 History of requests
+- 🧠 Rate limiting (5s per IP)
+- 🔌 API access for Discord bots / external tools
+- 🔒 Fully protected routes
 
 ---
 
-## 🔧 Setup Instructions
+## 🧠 Database Schema (PostgreSQL)
 
-### 1. **Clone the repo**
+```sql
+CREATE TABLE spotify_tokens (
+  id TEXT PRIMARY KEY,
+  access_token TEXT NOT NULL,
+  refresh_token TEXT NOT NULL,
+  updated_at TIMESTAMP NOT NULL
+);
+
+CREATE TABLE twitch_events (
+  id SERIAL PRIMARY KEY,
+  type TEXT NOT NULL,
+  data TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW() NOT NULL
+);
+
+CREATE TABLE song_requests (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  spotify_uri TEXT NOT NULL,
+  title TEXT NOT NULL,
+  artist TEXT NOT NULL,
+  requested_by TEXT NOT NULL,
+  approved BOOLEAN DEFAULT FALSE,
+  rejected BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE track_requests (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  link TEXT NOT NULL,
+  requested_by TEXT NOT NULL,
+  status TEXT DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE user_roles (
+  id TEXT PRIMARY KEY,
+  username TEXT,
+  is_moderator BOOLEAN DEFAULT FALSE,
+  is_banned BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+# 🚀 Getting Started (Dev)
+
+## 1. Clone & Install
 
 ```bash
-git clone https://github.com/your-username/streamthing.git
-cd streamthing
+git clone https://github.com/yourname/spotify-overlay-nextjs.git
+cd spotify-overlay-nextjs
 npm install
+
 ```
 
----
+## 2. Environment Variables
+Create a `.env.local` file:
 
-### 2. **Environment Variables**
+```
+# Discord OAuth
+DISCORD_CLIENT_ID=your_discord_client_id
+DISCORD_CLIENT_SECRET=your_discord_client_secret
+DISCORD_REDIRECT_URI=http://localhost:3000/api/discord/callback
+NEXT_PUBLIC_DISCORD_CLIENT_ID=your_discord_client_id
 
-Copy `.env.local.example` to `.env.local`:
+# Spotify Auth
+SPOTIFY_CLIENT_ID=your_spotify_client_id
+SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
+SPOTIFY_REDIRECT_URI=http://localhost:3000/api/spotify/callback
 
-```bash
-cp .env.local.example .env.local
+# Database
+DATABASE_URL=your_postgresql_connection_string
 ```
 
-Update it with your keys:
+## 3. Start Dev Server
 
-```env
-# Required
-NEXT_PUBLIC_SITE_URL=https://yourdomain.com
-
-# Discord
-DISCORD_CLIENT_ID=xxx
-DISCORD_CLIENT_SECRET=xxx
-DISCORD_REDIRECT_URI=https://yourdomain.com/api/discord/callback
-NEXT_PUBLIC_ALLOWED_DISCORD_USERS=your_discord_id_here
-
-# Spotify
-SPOTIFY_CLIENT_ID=xxx
-SPOTIFY_CLIENT_SECRET=xxx
-SPOTIFY_REDIRECT_URI=https://yourdomain.com/api/spotify/auth/callback
-
-# Twitch
-TWITCH_CLIENT_ID=xxx
-TWITCH_CLIENT_SECRET=xxx
-TWITCH_REDIRECT_URI=https://yourdomain.com/api/twitch/callback
-TWITCH_SECRET=some_super_secret_string
-
-# Postgres (Neon or Vercel DB)
-DATABASE_URL=postgres://...
 ```
-
----
-
-### 3. **Database**
-
-Make sure your `DATABASE_URL` points to a working Postgres DB (Neon recommended).
-Run Drizzle migrations if needed (I personally don't use that).
-
----
-
-### 4. **Deploy**
-
-Use [Vercel](https://vercel.com) for instant hosting.
-
-```bash
-vercel
-```
-
-Or link manually:
-
-```bash
-vercel link
-vercel env pull .env.local
-vercel deploy
-```
-
----
-
-## 🔑 Admin Access (Discord Auth)
-
-Only Discord user IDs in `NEXT_PUBLIC_ALLOWED_DISCORD_USERS` can:
-
-- Access the main panel `/`
-- Connect Spotify and Twitch accounts
-
----
-
-## 🌐 Overlay URLs (Use in Streamlabs/OBS)
-
-| Feature        | URL                            |
-|----------------|---------------------------------|
-| Spotify Overlay| `https://yourdomain.com/spotify` |
-| Twitch Events  | `https://yourdomain.com/events`  |
-
-> 💡 Add these as **browser sources** in OBS / Streamlabs with resolution: `1920x1080`, background transparent.
-
----
-
-## 🧪 Test Locally
-
-```bash
 npm run dev
 ```
 
-Preview at `http://localhost:3000`
+# 🤖 Discord Bot Integration
+You can use the song request API externally from a Discord bot like this:
 
----
+```ts
+// discord-bot/src/commands/request.ts
+import { SlashCommandBuilder } from 'discord.js';
+import fetch from 'node-fetch';
 
-## 🧼 TODO / Improvements
+export default {
+  data: new SlashCommandBuilder()
+    .setName('request')
+    .setDescription('Request a Spotify song')
+    .addStringOption(option =>
+      option.setName('link')
+        .setDescription('Spotify track link')
+        .setRequired(true)
+    ),
+  async execute(interaction) {
+    const link = interaction.options.getString('link');
+    const user = interaction.user;
 
-- [ ] Stream event queueing / animation
-- [ ] Twitch `stream.offline` support
-- [ ] Follow event tracking (when Affiliate)
-- [ ] Manual log viewer for debug
-- [ ] Actually make the twitch shit work lol
+    const res = await fetch('https://your-app-url/api/spotify/submit-link', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        link,
+        requestedBy: `${user.username} (${user.id})`,
+      }),
+    });
 
----
+    const data = await res.json();
 
-## 💬 Need Help?
+    if (res.ok) {
+      await interaction.reply(`✅ Song request submitted!`);
+    } else {
+      await interaction.reply(`❌ Error: ${data.error}`);
+    }
+  },
+};
 
-Reach out to [@lawson](https://github.com/oyuh), [@wthlaw](https://discord.com/users/527167786200465418) or fork the project.
+```
 
----
+# 🧪 API Endpoints
+| Method      | Endpoint | Description     |
+| :---        |    :----:   |          ---: |
+| POST      | /api/spotify/submit-link      | 	Submit a song  |
+| PATCH   | /api/spotify/requests    | 	Approve/Reject song (mod only)  |
+| GET   | 	/api/spotify/requests  | 	List requests (mod only)  |
+| PATCH   |/api/users/:id/role | Update role/ban status (admin) |
+| GET   |	/api/users/:id/role |	Get user role info |
+| GET   |/api/user | Current user info from cookie |
 
-## 📜 License
+# 🐛 Common Errors & Fixes
+| ❗ Error    | ✅ Fix |
+| ----------- | ----------- |
+| params.id must be awaited in route handlers     | Use proper { params }: { params: { id: string } } type |
+| cookies().get(...) is not awaited  | Use const cookieStore = cookies(); NOT async |
+| Spotify 401 error  | Refresh token is auto-handled — verify in .env |
+| Vercel deploy fails  | 	Ensure route typing is correct (see this repo's route.ts) |
 
-MIT
+
+-- Contributions welcome! PRs & Issues appreciated.
