@@ -15,8 +15,7 @@ function isRateLimited(ip: string): boolean {
 }
 
 export async function POST(req: NextRequest) {
-
-  const { link, requestedBy } = await req.json();
+  const { link, requestedBy: rawRequestedBy, user } = await req.json();
 
   const trackId = link?.split('/track/')[1]?.split('?')[0];
   if (!trackId) {
@@ -24,9 +23,23 @@ export async function POST(req: NextRequest) {
   }
 
   const ip = req.headers.get('x-forwarded-for') || 'unknown';
-if (isRateLimited(ip)) {
-  return NextResponse.json({ error: 'Too many requests. Please wait.' }, { status: 429 });
-}
+  if (isRateLimited(ip)) {
+    return NextResponse.json({ error: 'Too many requests. Please wait.' }, { status: 429 });
+  }
+
+  // 🌐 External bot support (Authorization: Bearer ...)
+  const authHeader = req.headers.get('authorization');
+  const botToken = process.env.BOT_API_TOKEN;
+
+  let requestedBy = 'anonymous';
+  if (authHeader === `Bearer ${botToken}`) {
+    if (user?.username) {
+      requestedBy = user.username;
+    }
+  } else {
+    // Default logic for frontend/web auth
+    requestedBy = rawRequestedBy || 'anonymous';
+  }
 
   let accessToken = await getSpotifyAccessTokenFromDB();
   if (!accessToken) {
@@ -47,7 +60,7 @@ if (isRateLimited(ip)) {
       spotifyUri: track.uri,
       title: track.name,
       artist: track.artists.map((a: any) => a.name).join(', '),
-      requestedBy: requestedBy || 'anonymous',
+      requestedBy,
     });
 
     return NextResponse.json({ success: true });
