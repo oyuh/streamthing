@@ -1,0 +1,8 @@
+{
+    "cron": [
+      {
+        "path": "/api/spotify/track",
+        "schedule": "*/1 * * * *"
+      }
+    ]
+  }

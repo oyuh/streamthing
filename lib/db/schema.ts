@@ -42,3 +42,12 @@ export const twitchEvents = pgTable('twitch_events', {
     isBanned: boolean('is_banned').default(false),
     createdAt: timestamp('created_at').defaultNow(),
   });
+
+export const trackLogs = pgTable('track_logs', {
+  id: serial('id').primaryKey(),
+  track: text('track').notNull(),
+  artist: text('artist').notNull(),
+  albumArt: text('album_art').notNull(),
+  duration: text('duration').notNull(),
+  loggedAt: timestamp('logged_at').defaultNow().notNull(),
+});
