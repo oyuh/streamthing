@@ -1,171 +1,178 @@
-# 🎧 Spotify Song Request Panel
+# Streamthing 🎵
 
-A full-stack web app that lets users submit Spotify song links for approval via a clean frontend UI. Moderators can approve or reject requests, ban/unban users, and manage user roles — all protected with Discord OAuth2. Supports external integration with a simple API for use in bots or companion tools.
-
-Built with:
-- 🔥 Next.js 15 (App Router)
-- 🐘 PostgreSQL (Vercel/Neon)
-- 🎵 Spotify API
-- 🧑‍💻 Discord OAuth2
-- 🎨 TailwindCSS
-- 🍡 Drizzle ORM
+[![Next.js](https://img.shields.io/badge/Next.js-15-blue?logo=nextdotjs)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-blue?logo=react)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Drizzle ORM](https://img.shields.io/badge/Drizzle%20ORM-0.41-blue?logo=drizzle)](https://orm.drizzle.team/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.0-blue?logo=tailwindcss)](https://tailwindcss.com/)
+[![Postgres](https://img.shields.io/badge/Postgres-3.4-blue?logo=postgresql)](https://www.postgresql.org/)
+[![Vercel](https://img.shields.io/badge/Vercel-Hosting-black?logo=vercel)](https://vercel.com/)
 
 ---
 
-## ✨ Features
+## Overview
 
-- 🔐 Discord Login (OAuth2)
-- 🎵 Submit Spotify song links
-- 🧑‍⚖️ Admin panel to manage user roles
-- ✅ Moderators can approve/deny requests
-- ❌ Banned users cannot submit
-- 📃 History of requests
-- 🧠 Rate limiting (5s per IP)
-- 🔌 API access for Discord bots / external tools
-- 🔒 Fully protected routes
+**Streamthing** is a dashboard and overlay platform for streamers, built with Next.js, React, Drizzle ORM, and PostgreSQL. It integrates with Spotify and Twitch, allowing you to display now-playing tracks, log track history, manage song requests, and show Twitch events in real time. The app features a modern dashboard, public API endpoints, and a robust database for track logging and moderation.
 
 ---
 
-## 🧠 Database Schema (PostgreSQL)
+## Table of Contents
 
-```sql
-CREATE TABLE spotify_tokens (
-  id TEXT PRIMARY KEY,
-  access_token TEXT NOT NULL,
-  refresh_token TEXT NOT NULL,
-  updated_at TIMESTAMP NOT NULL
-);
+- [Streamthing 🎵](#streamthing-)
+  - [Overview](#overview)
+  - [Table of Contents](#table-of-contents)
+  - [Features](#features)
+  - [Pages \& Navigation](#pages--navigation)
+  - [API Routes](#api-routes)
+    - [Spotify](#spotify)
+    - [Twitch (DOES NOT WORK)](#twitch-does-not-work)
+    - [Users \& Admin](#users--admin)
+  - [Database](#database)
+  - [Tech Stack](#tech-stack)
+  - [Development](#development)
+    - [Prerequisites](#prerequisites)
+    - [Setup](#setup)
+  - [License](#license)
 
-CREATE TABLE twitch_events (
-  id SERIAL PRIMARY KEY,
-  type TEXT NOT NULL,
-  data TEXT NOT NULL,
-  created_at TIMESTAMP DEFAULT NOW() NOT NULL
-);
+---
 
-CREATE TABLE song_requests (
-  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-  spotify_uri TEXT NOT NULL,
-  title TEXT NOT NULL,
-  artist TEXT NOT NULL,
-  requested_by TEXT NOT NULL,
-  approved BOOLEAN DEFAULT FALSE,
-  rejected BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP DEFAULT NOW()
-);
+## Features
 
-CREATE TABLE track_requests (
-  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-  link TEXT NOT NULL,
-  requested_by TEXT NOT NULL,
-  status TEXT DEFAULT 'pending',
-  created_at TIMESTAMP DEFAULT NOW()
-);
+- Spotify now playing overlay and track logging
+- Public API for recent track history and time-based queries
+- Twitch event overlay and integration
+- Song request system and moderation tools
+- Modern dashboard with real-time status indicators
+- Discord authentication and user roles
+- Responsive UI with Tailwind CSS
 
-CREATE TABLE user_roles (
-  id TEXT PRIMARY KEY,
-  username TEXT,
-  is_moderator BOOLEAN DEFAULT FALSE,
-  is_banned BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-```
+---
 
-# 🚀 Getting Started (Dev)
+## Pages & Navigation
 
-## 1. Clone & Install
+- `/`
+  **Dashboard**: Status indicators for Spotify/Twitch, quick links to overlays, song requests, and admin panels.
 
-```bash
-git clone https://github.com/yourname/spotify-overlay-nextjs.git
-cd spotify-overlay-nextjs
-npm install
+- `/spotify`
+  **Spotify Overlay**: Display the current Spotify track for your stream.
 
-```
+- `/events`
+  **Twitch Event Overlay**: Show Twitch events (follows, subs, etc) on stream.
 
-## 2. Environment Variables
-Create a `.env.local` file:
+- `/request-song`
+  **Song Request**: Public page for viewers to request songs.
 
-```
-# Discord OAuth
-DISCORD_CLIENT_ID=your_discord_client_id
-DISCORD_CLIENT_SECRET=your_discord_client_secret
-DISCORD_REDIRECT_URI=http://localhost:3000/api/discord/callback
-NEXT_PUBLIC_DISCORD_CLIENT_ID=your_discord_client_id
+- `/requests`
+  **Song Requests Mod Panel**: Moderators can view and manage song requests.
 
-# Spotify Auth
-SPOTIFY_CLIENT_ID=your_spotify_client_id
-SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
-SPOTIFY_REDIRECT_URI=http://localhost:3000/api/spotify/callback
+- `/admin/users`
+  **User Management**: Admin panel for managing user roles and bans.
 
-# Database
-DATABASE_URL=your_postgresql_connection_string
-```
+---
 
-## 3. Start Dev Server
+## API Routes
 
-```
-npm run dev
-```
+All API routes are under `/api/` and use Next.js Route Handlers.
 
-# 🤖 Discord Bot Integration
-You can use the song request API externally from a Discord bot like this:
+### Spotify
 
-```ts
-// discord-bot/src/commands/request.ts
-import { SlashCommandBuilder } from 'discord.js';
-import fetch from 'node-fetch';
+- `/api/spotify/track`
+  Returns the current Spotify track (JSON). Used for overlays and status.
 
-export default {
-  data: new SlashCommandBuilder()
-    .setName('request')
-    .setDescription('Request a Spotify song')
-    .addStringOption(option =>
-      option.setName('link')
-        .setDescription('Spotify track link')
-        .setRequired(true)
-    ),
-  async execute(interaction) {
-    const link = interaction.options.getString('link');
-    const user = interaction.user;
+- `/api/spotify/track-logs?limit=30`
+  Returns the last N tracks (default 30). Supports `start` and `end` query params for time-based filtering (max 7 days).
 
-    const res = await fetch('https://your-app-url/api/spotify/submit-link', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        link,
-        requestedBy: `${user.username} (${user.id})`,
-      }),
-    });
+- `/api/spotify/auth`
+  Spotify OAuth login.
 
-    const data = await res.json();
+- `/api/spotify/requests`
+  Song request submission and retrieval.
 
-    if (res.ok) {
-      await interaction.reply(`✅ Song request submitted!`);
-    } else {
-      await interaction.reply(`❌ Error: ${data.error}`);
-    }
-  },
-};
+- `/api/spotify/submit-link`
+  Submit a Spotify link for requests.
 
-```
+### Twitch (DOES NOT WORK)
 
-# 🧪 API Endpoints
-| Method      | Endpoint | Description     |
-| :---        |    :----:   |          ---: |
-| POST      | /api/spotify/submit-link      | 	Submit a song  |
-| PATCH   | /api/spotify/requests    | 	Approve/Reject song (mod only)  |
-| GET   | 	/api/spotify/requests  | 	List requests (mod only)  |
-| PATCH   |/api/users/:id/role | Update role/ban status (admin) |
-| GET   |	/api/users/:id/role |	Get user role info |
-| GET   |/api/user | Current user info from cookie |
+- `/api/twitch/events`
+  Returns recent Twitch events for overlays.
 
-# 🐛 Common Errors & Fixes
-| ❗ Error    | ✅ Fix |
-| ----------- | ----------- |
-| params.id must be awaited in route handlers     | Use proper { params }: { params: { id: string } } type |
-| cookies().get(...) is not awaited  | Use const cookieStore = cookies(); NOT async |
-| Spotify 401 error  | Refresh token is auto-handled — verify in .env |
-| Vercel deploy fails  | 	Ensure route typing is correct (see this repo's route.ts) |
+- `/api/twitch/auth`
+  Twitch OAuth login.
 
+- `/api/twitch/webhook`
+  Twitch event webhook receiver.
 
--- Contributions welcome! PRs & Issues appreciated.
+### Users & Admin
+
+- `/api/user`
+  Returns the current logged-in user.
+
+- `/api/users/[id]/role`
+  Get or update user roles (mod, ban, etc).
+
+- `/api/admin/users`
+  Admin user management.
+
+---
+
+## Database
+
+- **Tables:**
+  - `track_logs` (Spotify track history: track, artist, albumArt, duration, loggedAt)
+  - `userRoles` (user roles and permissions)
+  - (other tables for requests, Twitch events, etc)
+- **ORM:**
+  Uses Drizzle ORM for type-safe queries and migrations.
+
+---
+
+## Tech Stack
+
+- **Frontend:** Next.js 15, React 19, Tailwind CSS 4
+- **Backend:** Next.js Route Handlers (API), Drizzle ORM, PostgreSQL
+- **Integrations:** Spotify API, Twitch API, Discord OAuth
+- **Other:**
+  - Vercel for hosting and serverless functions
+  - Modern UI with Tailwind CSS
+
+---
+
+## Development
+
+### Prerequisites
+
+- Node.js 20+
+- pnpm (or npm/yarn)
+- PostgreSQL database
+
+### Setup
+
+1. **Install dependencies:**
+   ```sh
+   pnpm install
+   ```
+
+2. **Configure environment:**
+    - Copy `.env.local.example` to `.env.local` and fill in database credentials, Spotify/Twitch/Discord secrets, etc.
+
+3. **Run database migrations:**
+    ```sh
+    pnpm db:push
+    ```
+
+4. **Start the development server:**
+    ```sh
+    pnpm dev
+    ```
+
+5. **Build and run in production:**
+    ```sh
+    pnpm build
+    pnpm start
+    ```
+
+---
+
+## License
+
+MIT
