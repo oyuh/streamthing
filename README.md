@@ -149,7 +149,7 @@ All API routes are under `/api/` and use Next.js Route Handlers.
 
 1. **Install dependencies:**
    ```sh
-   pnpm install
+   npm install
    ```
 
 2. **Configure environment:**
@@ -157,18 +157,18 @@ All API routes are under `/api/` and use Next.js Route Handlers.
 
 3. **Run database migrations:**
     ```sh
-    pnpm db:push
+    npm run db:push
     ```
 
 4. **Start the development server:**
     ```sh
-    pnpm dev
+    npm run dev
     ```
 
 5. **Build and run in production:**
     ```sh
-    pnpm build
-    pnpm start
+    npm run build
+    npm run start
     ```
 
 ---
