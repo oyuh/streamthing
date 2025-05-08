@@ -1,0 +1,13 @@
+# Enable store compression
+compressionLevel=1
+
+# Use network concurrency
+networkConcurrency=8
+
+# Cache config
+cache-dir=.pnpm-store
+virtual-store-dir=node_modules/.pnpm
+
+# Node linker settings for compatibility
+node-linker=hoisted
+symlink=true

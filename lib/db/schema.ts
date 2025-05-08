@@ -1,53 +1,89 @@
-import { pgTable, text, serial, boolean, timestamp, } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm'; // ✅ Add this line!
+import { sql } from "drizzle-orm";
+import { pgTableCreator } from "drizzle-orm/pg-core";
 
-export const spotifyTokens = pgTable('spotify_tokens', {
-    id: text('id').primaryKey(), // Always 'singleton'
-    access_token: text('access_token').notNull(),
-    refresh_token: text('refresh_token').notNull(),
-    updated_at: timestamp('updated_at').notNull(),
-  });
+/**
+ * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
+ * database instance for multiple projects.
+ *
+ * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
+ */
+export const createTable = pgTableCreator((name) => `${name}`);
 
-export const twitchEvents = pgTable('twitch_events', {
-    id: serial('id').primaryKey(),
-    type: text('type').notNull(),            // like "stream.online"
-    data: text('data').notNull(),            // raw JSON stringified
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-  });
+// Spotify tokens table
+export const spotifyTokens = createTable(
+  "spotify_tokens",
+  (d) => ({
+    id: d.text("id").primaryKey(), // Always 'singleton'
+    access_token: d.text("access_token").notNull(),
+    refresh_token: d.text("refresh_token").notNull(),
+    updated_at: d.timestamp("updated_at").notNull(),
+  })
+);
 
+// Twitch events table
+export const twitchEvents = createTable(
+  "twitch_events",
+  (d) => ({
+    id: d.serial("id").primaryKey(),
+    type: d.text("type").notNull(),            // like "stream.online"
+    data: d.text("data").notNull(),            // raw JSON stringified
+    createdAt: d.timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  })
+);
 
-  export const songRequests = pgTable('song_requests', {
-    id: text('id').primaryKey().default(sql`gen_random_uuid()`),
-    spotifyUri: text('spotify_uri').notNull(),
-    title: text('title').notNull(),
-    artist: text('artist').notNull(),
-    requestedBy: text('requested_by').notNull(),
-    approved: boolean('approved').default(false),
-    rejected: boolean('rejected').default(false),
-    createdAt: timestamp('created_at').defaultNow(),
-  });
+// Song requests table
+export const songRequests = createTable(
+  "song_requests",
+  (d) => ({
+    id: d.text("id").primaryKey().default(sql`gen_random_uuid()`),
+    spotifyUri: d.text("spotify_uri").notNull(),
+    title: d.text("title").notNull(),
+    artist: d.text("artist").notNull(),
+    requestedBy: d.text("requested_by").notNull(),
+    approved: d.boolean("approved").default(false),
+    rejected: d.boolean("rejected").default(false),
+    createdAt: d.timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  })
+);
 
-  export const trackRequests = pgTable('track_requests', {
-    id: text('id').primaryKey().default(sql`gen_random_uuid()`),
-    link: text('link').notNull(),
-    requestedBy: text('requested_by').notNull(),
-    status: text('status').default('pending'), // pending | approved | rejected
-    createdAt: timestamp('created_at').defaultNow(),
-  });
+// Track requests table
+export const trackRequests = createTable(
+  "track_requests",
+  (d) => ({
+    id: d.text("id").primaryKey().default(sql`gen_random_uuid()`),
+    link: d.text("link").notNull(),
+    requestedBy: d.text("requested_by").notNull(),
+    status: d.text("status").default("pending"), // pending | approved | rejected
+    createdAt: d.timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  })
+);
 
-  export const userRoles = pgTable('user_roles', {
-    id: text('id').primaryKey(), // Discord ID
-    username: text('username'),
-    isModerator: boolean('is_moderator').default(false),
-    isBanned: boolean('is_banned').default(false),
-    createdAt: timestamp('created_at').defaultNow(),
-  });
+// User roles table
+export const userRoles = createTable(
+  "user_roles",
+  (d) => ({
+    id: d.text("id").primaryKey(), // Discord ID
+    username: d.text("username"),
+    isModerator: d.boolean("is_moderator").default(false),
+    isBanned: d.boolean("is_banned").default(false),
+    createdAt: d.timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  })
+);
 
-export const trackLogs = pgTable('track_logs', {
-  id: serial('id').primaryKey(),
-  track: text('track').notNull(),
-  artist: text('artist').notNull(),
-  albumArt: text('album_art').notNull(),
-  duration: text('duration').notNull(),
-  loggedAt: timestamp('logged_at').defaultNow().notNull(),
-});
+// Track logs table
+export const trackLogs = createTable(
+  "track_logs",
+  (d) => ({
+    id: d.serial("id").primaryKey(),
+    track: d.text("track").notNull(),
+    artist: d.text("artist").notNull(),
+    albumArt: d.text("album_art").notNull(),
+    duration: d.text("duration").notNull(),
+    loggedAt: d.timestamp("logged_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  }),
+  (table) => {
+    return {
+      loggedAtIdx: sql`CREATE INDEX IF NOT EXISTS "track_logs_logged_at_idx" ON "track_logs" ("logged_at" DESC)`
+    };
+  }
+);

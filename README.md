@@ -7,6 +7,7 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.0-blue?logo=tailwindcss)](https://tailwindcss.com/)
 [![Postgres](https://img.shields.io/badge/Postgres-3.4-blue?logo=postgresql)](https://www.postgresql.org/)
 [![Vercel](https://img.shields.io/badge/Vercel-Hosting-black?logo=vercel)](https://vercel.com/)
+[![pnpm](https://img.shields.io/badge/pnpm-8.x-orange?logo=pnpm)](https://pnpm.io/)
 
 ---
 
@@ -32,6 +33,7 @@
   - [Development](#development)
     - [Prerequisites](#prerequisites)
     - [Setup](#setup)
+    - [Migrating from npm to pnpm](#migrating-from-npm-to-pnpm)
   - [License](#license)
 
 ---
@@ -79,8 +81,10 @@ All API routes are under `/api/` and use Next.js Route Handlers.
 - `/api/spotify/track`
   Returns the current Spotify track (JSON). Used for overlays and status.
 
-- `/api/spotify/track-logs?limit=30`
-  Returns the last N tracks (default 30). Supports `start` and `end` query params for time-based filtering (max 7 days).
+- `/api/spotify/track-logs?limit=30&page=1`
+  Returns the last N tracks (default 30) with pagination support.
+  Supports `start` and `end` query params for time-based filtering (max 7 days).
+  The response includes pagination metadata.
 
 - `/api/spotify/auth`
   Spotify OAuth login.
@@ -131,6 +135,7 @@ All API routes are under `/api/` and use Next.js Route Handlers.
 - **Frontend:** Next.js 15, React 19, Tailwind CSS 4
 - **Backend:** Next.js Route Handlers (API), Drizzle ORM, PostgreSQL
 - **Integrations:** Spotify API, Twitch API, Discord OAuth
+- **Package Manager:** pnpm (faster, more efficient than npm)
 - **Other:**
   - Vercel for hosting and serverless functions
   - Modern UI with Tailwind CSS
@@ -142,34 +147,62 @@ All API routes are under `/api/` and use Next.js Route Handlers.
 ### Prerequisites
 
 - Node.js 20+
-- pnpm (or npm/yarn)
+- pnpm 8+ (recommended) or npm/yarn
 - PostgreSQL database
 
 ### Setup
 
-1. **Install dependencies:**
+1. **Install pnpm** (if not already installed):
    ```sh
-   npm install
+   npm install -g pnpm
    ```
 
-2. **Configure environment:**
+2. **Install dependencies:**
+   ```sh
+   pnpm install
+   ```
+
+3. **Configure environment:**
     - Copy `.env.local.example` to `.env.local` and fill in database credentials, Spotify/Twitch/Discord secrets, etc.
 
-3. **Run database migrations:**
+4. **Run database migrations:**
     ```sh
-    npm run db:push
+    pnpm run db:push
     ```
 
-4. **Start the development server:**
+5. **Start the development server:**
     ```sh
-    npm run dev
+    pnpm dev
     ```
 
-5. **Build and run in production:**
+6. **Build and run in production:**
     ```sh
-    npm run build
-    npm run start
+    pnpm build
+    pnpm start
     ```
+
+### Migrating from npm to pnpm
+
+If you've been using npm with this project, follow these steps to migrate to pnpm:
+
+1. **Automatic Migration**:
+   - **Windows**: Run the migration script by double-clicking `migrate-to-pnpm.bat` or run it from PowerShell/Command Prompt
+   - **macOS/Linux**: Make the script executable with `chmod +x migrate-to-pnpm.sh` then run `./migrate-to-pnpm.sh`
+
+   The migration script will:
+   - Install pnpm globally if needed
+   - Clean up npm artifacts
+   - Install dependencies with pnpm
+
+2. **Manual Migration**:
+   - Install pnpm globally: `npm install -g pnpm`
+   - Remove npm artifacts: `rm -rf node_modules package-lock.json`
+   - Install dependencies: `pnpm install`
+
+3. **After Migration**:
+   - All scripts in package.json now use pnpm
+   - The project includes optimized pnpm configuration files
+   - Remember to commit `pnpm-lock.yaml` for consistent dependency installation
 
 ---
 
