@@ -70,20 +70,16 @@ export const userRoles = createTable(
   })
 );
 
-// Track logs table
+// Track logs table - now using position numbers instead of serial IDs
 export const trackLogs = createTable(
   "track_logs",
   (d) => ({
-    id: d.serial("id").primaryKey(),
+    // Position from 1-150, where 1 is the newest track
+    position: d.integer("position").primaryKey(),
     track: d.text("track").notNull(),
     artist: d.text("artist").notNull(),
     albumArt: d.text("album_art").notNull(),
     duration: d.text("duration").notNull(),
     loggedAt: d.timestamp("logged_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
-  }),
-  (table) => {
-    return {
-      loggedAtIdx: sql`CREATE INDEX IF NOT EXISTS "track_logs_logged_at_idx" ON "track_logs" ("logged_at" DESC)`
-    };
-  }
+  })
 );

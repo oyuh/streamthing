@@ -1,18 +1,22 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db/client';
 import { trackLogs } from '@/lib/db/schema';
-import { desc, and, gte, lte, sql } from 'drizzle-orm';
+import { and, gte, lte, sql, asc, between } from 'drizzle-orm';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const limit = Number.parseInt(searchParams.get('limit') || '30', 10);
   const page = Number.parseInt(searchParams.get('page') || '1', 10);
-  const offset = (page - 1) * limit;
+
+  // Calculate positions to return based on page and limit
+  const startPosition = (page - 1) * limit + 1;
+  const endPosition = startPosition + limit - 1;
 
   const start = searchParams.get('start');
   const end = searchParams.get('end');
 
   type TrackResult = {
+    position: number;
     track: string;
     artist: string;
     albumArt: string;
@@ -23,12 +27,12 @@ export async function GET(request: Request) {
   let tracks: TrackResult[];
   let totalCount: number;
 
-  // Get total count for pagination
+  // Get total count (max 150)
   const countResult = await db.select({ count: sql<number>`count(*)` }).from(trackLogs);
-  totalCount = countResult[0].count;
+  totalCount = Math.min(countResult[0].count, 150);
 
   if (start && end) {
-    // Validate dates and max range (7 days)
+    // If using date range filtering
     const startDate = new Date(start);
     const endDate = new Date(end);
     const msInWeek = 7 * 24 * 60 * 60 * 1000;
@@ -40,7 +44,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Date range cannot exceed 7 days' }, { status: 400 });
     }
 
-    // Get filtered count
+    // Get filtered count for date range
     const filteredCountResult = await db.select({ count: sql<number>`count(*)` })
       .from(trackLogs)
       .where(
@@ -49,10 +53,12 @@ export async function GET(request: Request) {
           lte(trackLogs.loggedAt, endDate)
         )
       );
-    totalCount = filteredCountResult[0].count;
+    totalCount = Math.min(filteredCountResult[0].count, 150);
 
+    // Get tracks within date range and position range
     tracks = await db
       .select({
+        position: trackLogs.position,
         track: trackLogs.track,
         artist: trackLogs.artist,
         albumArt: trackLogs.albumArt,
@@ -63,16 +69,17 @@ export async function GET(request: Request) {
       .where(
         and(
           gte(trackLogs.loggedAt, startDate),
-          lte(trackLogs.loggedAt, endDate)
+          lte(trackLogs.loggedAt, endDate),
+          between(trackLogs.position, startPosition, endPosition)
         )
       )
-      .orderBy(desc(trackLogs.loggedAt))
-      .limit(limit)
-      .offset(offset);
+      .orderBy(asc(trackLogs.position)) // Position 1 first (newest first)
+      .limit(limit);
   } else {
-    // Default: paginated tracks
+    // Simple position-based pagination without date filtering
     tracks = await db
       .select({
+        position: trackLogs.position,
         track: trackLogs.track,
         artist: trackLogs.artist,
         albumArt: trackLogs.albumArt,
@@ -80,9 +87,9 @@ export async function GET(request: Request) {
         loggedAt: trackLogs.loggedAt,
       })
       .from(trackLogs)
-      .orderBy(desc(trackLogs.loggedAt))
-      .limit(limit)
-      .offset(offset);
+      .where(between(trackLogs.position, startPosition, endPosition))
+      .orderBy(asc(trackLogs.position)) // Position 1 first (newest first)
+      .limit(limit);
   }
 
   const totalPages = Math.ceil(totalCount / limit);
