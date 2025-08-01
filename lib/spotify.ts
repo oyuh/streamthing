@@ -1,3 +1,7 @@
+// Helper to get Spotify track URL
+export function getSpotifyTrackUrl(trackId: string) {
+  return `https://api.spotify.com/v1/tracks/${trackId}`;
+}
 import axios from 'axios';
 import { db } from '@/lib/db/client';
 import { spotifyTokens } from '@/lib/db/schema';

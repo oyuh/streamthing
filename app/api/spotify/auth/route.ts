@@ -9,7 +9,8 @@ export async function GET() {
     scope: [
       'user-read-currently-playing',
       'user-read-playback-state',
-      'user-modify-playback-state', // ✅ This is what enables queueing
+      'user-modify-playback-state',
+      'user-read-recently-played', // ✅ Needed for recently played endpoint
     ].join(' '),
   });
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
-import { getSpotifyAccessTokenFromDB, refreshAccessToken } from '@/lib/spotify';
+import { getSpotifyAccessTokenFromDB, refreshAccessToken, getSpotifyTrackUrl } from '@/lib/spotify';
 import { db } from '@/lib/db/client';
 import { songRequests } from '@/lib/db/schema';
 
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const res = await axios.get(`https://api.spotify.com/v1/tracks/${trackId}`, {
+    const res = await axios.get(getSpotifyTrackUrl(trackId), {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 
