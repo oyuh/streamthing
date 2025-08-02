@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db/client'
 import { userRoles } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
+import { cookies } from 'next/headers';
+import { getUserFromToken } from '@/lib/auth';
 
 export async function GET(
   _req: NextRequest,
@@ -33,6 +35,31 @@ export async function PATCH(
   const { id } = await params;
   if (!id) {
     return NextResponse.json({ error: 'Missing user ID' }, { status: 400 });
+  }
+
+  // ✅ Require authentication for role updates
+  const cookieStore = await cookies();
+  const authCookie = cookieStore.get('auth_token');
+
+  if (!authCookie) {
+    return NextResponse.json({ error: 'Unauthorized (no token)' }, { status: 403 });
+  }
+
+  const user = getUserFromToken(authCookie.value);
+
+  if (!user?.id) {
+    return NextResponse.json({ error: 'Unauthorized (invalid token)' }, { status: 403 });
+  }
+
+  // ✅ Require moderator permissions for role changes
+  const [role] = await db
+    .select()
+    .from(userRoles)
+    .where(eq(userRoles.id, user.id))
+    .limit(1);
+
+  if (!role || !role.isModerator) {
+    return NextResponse.json({ error: 'Unauthorized (not moderator)' }, { status: 403 });
   }
 
   let data: any;

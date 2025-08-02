@@ -4,6 +4,7 @@ import {userRoles, songRequests } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { addToSpotifyQueue } from '@/lib/spotify';
 import { cookies } from 'next/headers';
+import { getUserFromToken } from '@/lib/auth';
 
 
 export async function GET() {
@@ -28,13 +29,18 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid request data' }, { status: 400 });
     }
 
-    // ✅ FIXED: Await cookies properly in App Router
-    const cookieStore = await cookies(); // <-- this must be awaited now
-    const cookie = cookieStore.get('discord_user');
-    const user = cookie ? JSON.parse(cookie.value) : null;
+    // ✅ FIXED: Use JWT authentication instead of plain cookie
+    const cookieStore = await cookies();
+    const authCookie = cookieStore.get('auth_token');
+
+    if (!authCookie) {
+      return NextResponse.json({ error: 'Unauthorized (no token)' }, { status: 403 });
+    }
+
+    const user = getUserFromToken(authCookie.value);
 
     if (!user?.id) {
-      return NextResponse.json({ error: 'Unauthorized (no cookie)' }, { status: 403 });
+      return NextResponse.json({ error: 'Unauthorized (invalid token)' }, { status: 403 });
     }
 
     // ✅ Moderator check using database
@@ -45,7 +51,7 @@ export async function PATCH(req: NextRequest) {
       .limit(1);
 
     if (!role || !role.isModerator) {
-      return NextResponse.json({ error: 'Unauthorized (not allowed)' }, { status: 403 });
+      return NextResponse.json({ error: 'Unauthorized (not moderator)' }, { status: 403 });
     }
 
     // ✅ Pull the request to approve/reject
