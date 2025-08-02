@@ -19,8 +19,10 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@types/jsonwebtoken": "9.0.10",
     "axios": "^1.8.4",
     "drizzle-orm": "^0.41.0",
+    "jsonwebtoken": "9.0.2",
     "next": "latest",
     "postgres": "^3.4.5",
     "react": "latest",

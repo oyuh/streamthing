@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { FaSpotify, FaMusic, FaUser, FaBan, FaHome, FaPaperPlane } from 'react-icons/fa';
 
 export default function RequestSongPage() {
   const [link, setLink] = useState('');
@@ -62,58 +63,172 @@ export default function RequestSongPage() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-black to-zinc-900 text-white flex items-center justify-center p-6">
-      <div className="w-full max-w-xl bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl p-8 space-y-6">
-        <h1 className="text-3xl font-extrabold text-center bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-lime-500 drop-shadow">
-          🎵 Submit a Song Request
-        </h1>
+  if (isBanned) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-slate-900 to-black text-white">
+        {/* Header */}
+        <header className="bg-zinc-900/50 border-b border-zinc-700 backdrop-blur-sm sticky top-0 z-10">
+          <div className="max-w-6xl mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <FaBan className="text-red-400 text-2xl" />
+                <h1 className="text-2xl font-bold text-red-400">Access Denied</h1>
+              </div>
+              <a
+                href="/"
+                className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded-lg transition"
+              >
+                <FaHome />
+                Back to Dashboard
+              </a>
+            </div>
+          </div>
+        </header>
 
-        {!user && !isBanned && (
-          <div className="text-center space-y-4">
-            <p className="text-zinc-300">You must be logged in with Discord to request a song.</p>
+        <main className="flex items-center justify-center min-h-[calc(100vh-80px)] px-6">
+          <div className="text-center max-w-md">
+            <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <FaBan className="text-red-400 text-3xl" />
+            </div>
+            <h2 className="text-2xl font-bold mb-4">You are banned</h2>
+            <p className="text-zinc-400 mb-6">You have been banned from submitting song requests.</p>
+            <a
+              href="/"
+              className="inline-flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 px-6 py-3 rounded-lg transition"
+            >
+              <FaHome />
+              Return to Dashboard
+            </a>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-slate-900 to-black text-white">
+      {/* Header */}
+      <header className="bg-zinc-900/50 border-b border-zinc-700 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <FaMusic className="text-green-400 text-2xl" />
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 via-blue-400 to-green-400 bg-clip-text text-transparent">
+                Song Requests
+              </h1>
+            </div>
+            <a
+              href="/"
+              className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded-lg transition"
+            >
+              <FaHome />
+              Back to Dashboard
+            </a>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-2xl mx-auto px-6 py-12">
+        {!user ? (
+          <div className="text-center">
+            <div className="w-20 h-20 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <FaUser className="text-indigo-400 text-3xl" />
+            </div>
+            <h2 className="text-3xl font-bold mb-4">Login Required</h2>
+            <p className="text-zinc-400 mb-8 max-w-md mx-auto">
+              You must be logged in with Discord to submit song requests.
+            </p>
             <a
               href="/api/discord/login"
-              className="inline-block bg-indigo-600 hover:bg-indigo-500 transition px-6 py-2 rounded-lg text-white font-semibold"
+              className="inline-flex items-center gap-3 bg-indigo-600 hover:bg-indigo-500 px-8 py-4 rounded-lg text-white font-semibold shadow-lg transition text-lg"
             >
+              <FaUser />
               Login with Discord
             </a>
           </div>
-        )}
+        ) : (
+          <div className="space-y-8">
+            {/* Welcome Section */}
+            <div className="text-center bg-zinc-800/50 border border-zinc-700 rounded-xl p-8">
+              <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FaSpotify className="text-white text-2xl" />
+              </div>
+              <h2 className="text-2xl font-bold mb-2">Request a Song</h2>
+              <p className="text-zinc-400 mb-6">
+                Share a Spotify track link and it will be added to the request queue for review.
+              </p>
+              <div className="flex items-center justify-center gap-2 text-sm text-zinc-500">
+                <FaUser className="w-4 h-4" />
+                <span>Logged in as <span className="text-white font-medium">{user.username}</span></span>
+              </div>
+            </div>
 
-        {isBanned && (
-          <div className="text-center text-red-400 font-semibold">
-            🚫 You are banned from submitting song requests.
+            {/* Request Form */}
+            <div className="bg-zinc-800/50 border border-zinc-700 rounded-xl p-8">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-2">
+                    Spotify Track URL
+                  </label>
+                  <input
+                    type="url"
+                    value={link}
+                    onChange={(e) => setLink(e.target.value)}
+                    placeholder="https://open.spotify.com/track/..."
+                    className="w-full bg-zinc-900/50 border border-zinc-600 rounded-lg px-4 py-3 text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                    required
+                  />
+                  <p className="text-xs text-zinc-500 mt-2">
+                    Copy the share link from any Spotify track
+                  </p>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={status === 'loading'}
+                  className="w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 disabled:from-zinc-600 disabled:to-zinc-500 disabled:cursor-not-allowed px-6 py-4 rounded-lg text-white font-semibold transition flex items-center justify-center gap-2"
+                >
+                  {status === 'loading' ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <FaPaperPlane />
+                      Submit Request
+                    </>
+                  )}
+                </button>
+              </form>
+
+              {/* Status Messages */}
+              {status === 'success' && (
+                <div className="mt-6 p-4 bg-green-900/50 border border-green-700 rounded-lg">
+                  <div className="flex items-center gap-2 text-green-400">
+                    <FaMusic />
+                    <span className="font-medium">Song request submitted successfully!</span>
+                  </div>
+                  <p className="text-green-300 text-sm mt-1">
+                    Your request is now in the queue for review.
+                  </p>
+                </div>
+              )}
+
+              {status === 'error' && (
+                <div className="mt-6 p-4 bg-red-900/50 border border-red-700 rounded-lg">
+                  <div className="flex items-center gap-2 text-red-400">
+                    <FaBan />
+                    <span className="font-medium">Request failed</span>
+                  </div>
+                  <p className="text-red-300 text-sm mt-1">{errorMsg}</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
-
-        {user && !isBanned && (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <input
-              type="text"
-              value={link}
-              onChange={(e) => setLink(e.target.value)}
-              placeholder="Paste your Spotify track link..."
-              className="w-full px-5 py-3 rounded-lg bg-zinc-800 text-white border border-zinc-700 focus:ring-2 focus:ring-green-400 transition outline-none"
-              required
-            />
-            <button
-              type="submit"
-              className="w-full bg-green-500 hover:bg-green-600 py-3 px-6 rounded-lg text-black font-bold transition"
-              disabled={status === 'loading'}
-            >
-              {status === 'loading' ? 'Submitting...' : 'Submit'}
-            </button>
-
-            {status === 'success' && (
-              <p className="text-green-400 text-center">✅ Song request submitted successfully!</p>
-            )}
-            {status === 'error' && (
-              <p className="text-red-400 text-center">❌ {errorMsg}</p>
-            )}
-          </form>
-        )}
-      </div>
+      </main>
     </div>
   );
 }

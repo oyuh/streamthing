@@ -5,6 +5,7 @@ import axios from 'axios';
 import { db } from '@/lib/db/client';
 import { userRoles } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { createSecureToken } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
@@ -41,11 +42,20 @@ export async function GET(req: NextRequest) {
 
     const user = userInfo.data;
 
-    // 🍪 Set the cookie using the Response API, not cookieStore.set (which doesn't work in App Router)
+    // Create secure JWT token instead of plain JSON
+    const secureToken = createSecureToken({
+      id: user.id,
+      username: user.username,
+    });
+
+    // Set the secure token as an httpOnly cookie
     const res = NextResponse.redirect(new URL('/', req.url));
-    res.cookies.set('discord_user', JSON.stringify({ id: user.id, username: user.username }), {
+    res.cookies.set('auth_token', secureToken, {
       httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
       path: '/',
+      maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
     });
 
     // ✅ Insert or update user in DB

@@ -13,6 +13,7 @@ import {
   FaLink,
   FaPalette
 } from 'react-icons/fa';
+import LandingPage from './components/LandingPage';
 
 function StatusIndicator({ label, connected }: { label: string; connected: boolean }) {
   return (
@@ -86,21 +87,7 @@ export default function Home() {
   }, [discordUser]);
 
   if (!discordUser) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-zinc-900 to-black flex items-center justify-center text-white">
-        <div className="bg-zinc-800 rounded-2xl shadow-2xl p-10 flex flex-col items-center gap-6">
-          <h1 className="text-3xl font-bold mb-2">Welcome to Streamthing</h1>
-          <p className="mb-4 text-zinc-300">Please log in to access your dashboard.</p>
-          <a
-            href="/api/discord/login"
-            className="bg-indigo-600 hover:bg-indigo-500 px-8 py-3 rounded-lg text-white font-semibold shadow-lg transition text-lg flex items-center gap-3"
-          >
-            <FaDiscord size={24} />
-            Login with Discord
-          </a>
-        </div>
-      </div>
-    );
+    return <LandingPage />;
   }
 
   return (
@@ -205,6 +192,16 @@ export default function Home() {
               Spotify Theme Editor
             </a>
           )}
+        </div>
+
+        {/* Logout Section */}
+        <div className="text-center pt-4 border-t border-zinc-700">
+          <a
+            href="/api/discord/logout"
+            className="text-zinc-400 hover:text-zinc-300 transition-colors text-sm underline"
+          >
+            Log out of Discord
+          </a>
         </div>
       </div>
     </div>
