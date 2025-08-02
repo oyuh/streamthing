@@ -65,6 +65,7 @@ export const userRoles = createTable(
     id: d.text("id").primaryKey(), // Discord ID
     username: d.text("username"),
     isModerator: d.boolean("is_moderator").default(false),
+    isStreamer: d.boolean("is_streamer").default(false),
     isBanned: d.boolean("is_banned").default(false),
     createdAt: d.timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
   })

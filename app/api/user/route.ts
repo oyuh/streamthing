@@ -2,6 +2,9 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getUserFromToken } from '@/lib/auth';
+import { db } from '@/lib/db/client';
+import { userRoles } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
 
 export async function GET() {
   const cookieStore = await cookies();
@@ -26,8 +29,35 @@ export async function GET() {
     return response;
   }
 
-  return NextResponse.json({
-    id: user.id,
-    username: user.username,
-  });
+  try {
+    // Fetch complete user role information from database
+    const [userRole] = await db
+      .select()
+      .from(userRoles)
+      .where(eq(userRoles.id, user.id))
+      .limit(1);
+
+    if (!userRole) {
+      // User exists in JWT but not in database, return basic info
+      return NextResponse.json({
+        id: user.id,
+        username: user.username,
+      });
+    }
+
+    return NextResponse.json({
+      id: userRole.id,
+      username: userRole.username,
+      isModerator: userRole.isModerator,
+      isStreamer: userRole.isStreamer,
+      isBanned: userRole.isBanned,
+    });
+  } catch (error) {
+    console.error('Error fetching user role:', error);
+    // Fallback to basic info if database query fails
+    return NextResponse.json({
+      id: user.id,
+      username: user.username,
+    });
+  }
 }

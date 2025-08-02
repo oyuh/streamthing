@@ -58,17 +58,29 @@ export async function GET(req: NextRequest) {
       maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
     });
 
-    // ✅ Insert or update user in DB
+    // ✅ Insert or update user in DB with streamer role check
+    const isStreamerUser = user.id === process.env.STREAMER_DISCORD_ID;
+
     const existing = await db.select().from(userRoles).where(eq(userRoles.id, user.id)).limit(1);
     if (existing.length > 0) {
+      // Update existing user, preserve existing roles unless they're the streamer
+      const updateData: any = { username: user.username };
+      if (isStreamerUser) {
+        updateData.isStreamer = true;
+        updateData.isModerator = true; // Streamers are also moderators
+      }
+
       await db
         .update(userRoles)
-        .set({ username: user.username })
+        .set(updateData)
         .where(eq(userRoles.id, user.id));
     } else {
+      // Create new user with appropriate roles
       await db.insert(userRoles).values({
         id: user.id,
         username: user.username,
+        isStreamer: isStreamerUser,
+        isModerator: isStreamerUser, // Streamers are also moderators
       });
     }
 

@@ -11,28 +11,19 @@ import {
   FaTwitch,
   FaEye,
   FaLink,
-  FaPalette
+  FaPalette,
+  FaRocket,
+  FaCog,
+  FaPlay,
+  FaHeart,
+  FaCrown
 } from 'react-icons/fa';
 import LandingPage from './components/LandingPage';
-
-function StatusIndicator({ label, connected }: { label: string; connected: boolean }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span
-        className={`inline-block w-3 h-3 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`}
-        title={connected ? 'Connected' : 'Not Connected'}
-      />
-      <span className="text-sm font-medium">{label}: {connected ? 'Connected' : 'Not Connected'}</span>
-    </div>
-  );
-}
 
 export default function Home() {
   const [discordUser, setDiscordUser] = useState<any | null>(null);
   const [userRole, setUserRole] = useState<any | null>(null);
   const [unauthorized, setUnauthorized] = useState(false);
-  const [spotifyStatus, setSpotifyStatus] = useState<'loading' | 'connected' | 'disconnected'>('loading');
-  const [twitchStatus, setTwitchStatus] = useState<'loading' | 'connected' | 'disconnected'>('loading');
   const [versionInfo, setVersionInfo] = useState<any | null>(null);
 
   useEffect(() => {
@@ -41,14 +32,10 @@ export default function Home() {
       .then(data => {
         if (data && data.username) {
           setDiscordUser(data);
-          fetch(`/api/users/${data.id}/role`)
-            .then(res => res.json())
-            .then(role => {
-              setUserRole(role);
-              if (!role?.isModerator) {
-                setUnauthorized(true);
-              }
-            });
+          setUserRole(data); // Use the role info from the same API call
+          if (!data.isModerator && !data.isStreamer) {
+            setUnauthorized(true);
+          }
         }
       });
 
@@ -66,142 +53,251 @@ export default function Home() {
     }
   }, [unauthorized]);
 
-  useEffect(() => {
-    if (discordUser) {
-      // Spotify: check if /api/spotify/track returns a track
-      setSpotifyStatus('loading');
-      fetch('/api/spotify/track')
-        .then(res => res.json())
-        .then(data => {
-          if (data && Object.keys(data).length > 0) {
-            setSpotifyStatus('connected');
-          } else {
-            setSpotifyStatus('disconnected');
-          }
-        })
-        .catch(() => setSpotifyStatus('disconnected'));
-
-      // Set Twitch as disconnected since it's not implemented yet
-      setTwitchStatus('disconnected');
-    }
-  }, [discordUser]);
-
   if (!discordUser) {
     return <LandingPage />;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-zinc-900 to-black text-white flex flex-col items-center justify-center px-4 py-12 font-sans">
-      <div className="w-full max-w-2xl bg-zinc-800/80 rounded-2xl shadow-2xl p-8 flex flex-col gap-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold drop-shadow-md mb-1">
-              streamthing ({versionInfo ? versionInfo.commitHash : '...'})
-            </h1>
-            <div className="text-zinc-300 text-sm space-y-1">
-              <p>{new Date().toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-zinc-900 text-white relative">
+      {/* Subtle background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-30">
+        <div className="absolute -top-40 -left-40 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 -right-48 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 left-1/3 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl"></div>
+      </div>
+
+      <div className="relative z-10 px-6 py-8">
+        {/* Header */}
+        <div className="max-w-6xl mx-auto mb-12">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
+                  <FaRocket className="text-lg text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                    streamthing
+                  </h1>
+                  <p className="text-gray-400">Control Center</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-blue-500">
+                  {discordUser?.avatar ? (
+                    <img
+                      src={`https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`}
+                      alt={discordUser.username}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <FaDiscord className="text-white text-sm" />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <p className="font-medium text-white text-sm">{discordUser?.username}</p>
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${
+                    userRole?.isStreamer
+                      ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30'
+                      : userRole?.isModerator
+                      ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+                      : 'bg-blue-500/20 text-blue-300 border-blue-500/30'
+                  }`}>
+                    {userRole?.isStreamer ? (
+                      <>
+                        <FaCrown className="w-3 h-3" />
+                        Streamer
+                      </>
+                    ) : userRole?.isModerator ? (
+                      'Moderator'
+                    ) : (
+                      'User'
+                    )}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-right space-y-1">
+              <p className="text-gray-400 text-sm">
+                {new Date().toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </p>
               {versionInfo && (
-                <p>
+                <p className="text-xs">
+                  <span className="text-gray-500">Version: </span>
                   <a
                     href={versionInfo.commitUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-400 hover:text-blue-300 transition-colors"
+                    className="text-blue-400 hover:text-blue-300 transition-colors font-mono"
                   >
-                    view commit
+                    {versionInfo.commitHash}
                   </a>
                 </p>
               )}
             </div>
           </div>
-          <div className="flex flex-col gap-2 min-w-[180px]">
-            <StatusIndicator label="Spotify" connected={spotifyStatus === 'connected'} />
-            <div className="flex items-center gap-2">
-              <span className="inline-block w-3 h-3 rounded-full bg-gray-500" title="Not Available" />
-              <span className="text-sm font-medium">Twitch: Not Available</span>
+        </div>
+
+        {/* Main Grid */}
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+            {/* Song Request Card - Always visible */}
+            <a
+              href="/request-song"
+              className="group block bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 hover:border-emerald-500/50 rounded-xl p-6 transition-all duration-200 hover:bg-gray-800/70"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-10 h-10 rounded-lg bg-emerald-600 flex items-center justify-center">
+                  <FaMusic className="text-white" />
+                </div>
+                <FaPlay className="text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity text-sm" />
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">Request a Song</h3>
+              <p className="text-gray-400 text-sm mb-3">Submit music requests for the stream</p>
+              <div className="flex items-center gap-2 text-emerald-400 text-xs font-medium">
+                <span>Make Request</span>
+                <FaMusic className="text-xs" />
+              </div>
+            </a>
+
+            {/* Moderator Cards */}
+            {userRole?.isModerator && (
+              <>
+                {/* Spotify Connect */}
+                <a
+                  href="/api/spotify/auth?login=true"
+                  className="group block bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 hover:border-green-500/50 rounded-xl p-6 transition-all duration-200 hover:bg-gray-800/70"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-10 h-10 rounded-lg bg-green-600 flex items-center justify-center">
+                      <FaSpotify className="text-white" />
+                    </div>
+                    <FaLink className="text-green-400 opacity-0 group-hover:opacity-100 transition-opacity text-sm" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-2">Spotify Connect</h3>
+                  <p className="text-gray-400 text-sm mb-3">Link your Spotify account and access overlay</p>
+                  <div className="flex items-center gap-2 text-green-400 text-xs font-medium">
+                    <span>Connect Now</span>
+                    <FaSpotify className="text-xs" />
+                  </div>
+                </a>
+
+                {/* Song Requests Moderation */}
+                <a
+                  href="/requests"
+                  className="group block bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 hover:border-red-500/50 rounded-xl p-6 transition-all duration-200 hover:bg-gray-800/70"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-10 h-10 rounded-lg bg-red-600 flex items-center justify-center">
+                      <FaList className="text-white" />
+                    </div>
+                    <FaCog className="text-red-400 opacity-0 group-hover:opacity-100 transition-opacity text-sm" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-2">Moderate Requests</h3>
+                  <p className="text-gray-400 text-sm mb-3">Review and approve song requests</p>
+                  <div className="flex items-center gap-2 text-red-400 text-xs font-medium">
+                    <span>Manage Queue</span>
+                    <FaList className="text-xs" />
+                  </div>
+                </a>
+
+                {/* User Management */}
+                <a
+                  href="/admin/users"
+                  className="group block bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 hover:border-blue-500/50 rounded-xl p-6 transition-all duration-200 hover:bg-gray-800/70"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center">
+                      <FaUsers className="text-white" />
+                    </div>
+                    <FaCog className="text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity text-sm" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-2">User Management</h3>
+                  <p className="text-gray-400 text-sm mb-3">Manage user roles and permissions</p>
+                  <div className="flex items-center gap-2 text-blue-400 text-xs font-medium">
+                    <span>Admin Panel</span>
+                    <FaUsers className="text-xs" />
+                  </div>
+                </a>
+
+                {/* Theme Editor */}
+                <a
+                  href="/admin/themes"
+                  className="group block bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 hover:border-purple-500/50 rounded-xl p-6 transition-all duration-200 hover:bg-gray-800/70"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center">
+                      <FaPalette className="text-white" />
+                    </div>
+                    <FaCog className="text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity text-sm" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-2">Theme Editor</h3>
+                  <p className="text-gray-400 text-sm mb-3">Customize Spotify overlay themes</p>
+                  <div className="flex items-center gap-2 text-purple-400 text-xs font-medium">
+                    <span>Customize</span>
+                    <FaPalette className="text-xs" />
+                  </div>
+                </a>
+              </>
+            )}
+
+            {/* Coming Soon Cards */}
+            <div className="bg-gray-800/30 border border-gray-700/30 rounded-xl p-6 opacity-60 cursor-not-allowed">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-10 h-10 rounded-lg bg-gray-600 flex items-center justify-center">
+                  <FaTwitch className="text-gray-300" />
+                </div>
+                <span className="text-xs text-gray-500 bg-gray-700 px-2 py-1 rounded-full">Coming Soon</span>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-300 mb-2">Twitch Integration</h3>
+              <p className="text-gray-500 text-sm mb-3">Advanced Twitch API features</p>
+              <div className="flex items-center gap-2 text-gray-500 text-xs font-medium">
+                <span>In Development</span>
+                <FaTwitch className="text-xs" />
+              </div>
+            </div>
+
+            <div className="bg-gray-800/30 border border-gray-700/30 rounded-xl p-6 opacity-60 cursor-not-allowed">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-10 h-10 rounded-lg bg-gray-600 flex items-center justify-center">
+                  <FaCalendarAlt className="text-gray-300" />
+                </div>
+                <span className="text-xs text-gray-500 bg-gray-700 px-2 py-1 rounded-full">Coming Soon</span>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-300 mb-2">Event Manager</h3>
+              <p className="text-gray-500 text-sm mb-3">Schedule and manage stream events</p>
+              <div className="flex items-center gap-2 text-gray-500 text-xs font-medium">
+                <span>In Development</span>
+                <FaCalendarAlt className="text-xs" />
+              </div>
             </div>
           </div>
         </div>
-        <div className="grid gap-4 w-full grid-cols-1 md:grid-cols-2">
-          {/* Spotify Connect/Overlay - Only for moderators */}
-          {userRole?.isModerator && (
-            <a
-              href="/api/spotify/auth?login=true"
-              className="flex items-center gap-3 bg-green-500 hover:bg-green-600 text-black font-bold text-center py-4 px-4 rounded-lg shadow-lg transition text-lg justify-center"
-            >
-              <FaSpotify size={24} />
-              Spotify Connect & Overlay
-            </a>
-          )}
 
-          {/* Twitch Connect - Disabled for now */}
-          <div className="flex items-center gap-3 bg-gray-500 text-gray-300 font-bold text-center py-4 px-4 rounded-lg shadow-lg text-lg justify-center cursor-not-allowed opacity-50">
-            <FaTwitch size={24} />
-            Twitch
+        {/* Footer */}
+        <div className="max-w-6xl mx-auto mt-12 pt-6 border-t border-gray-700/50">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-gray-400 text-sm">
+              Made with <FaHeart className="inline text-red-400 mx-1" /> by Lawson
+            </p>
+            <a
+              href="/api/discord/logout"
+              className="inline-flex items-center gap-2 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 hover:text-red-300 transition-all text-sm"
+            >
+              <FaDiscord className="text-xs" />
+              Logout
+            </a>
           </div>
-
-          {/* Twitch Events - Disabled for now */}
-          <div className="flex items-center gap-3 bg-gray-500 text-gray-300 font-bold text-center py-4 px-4 rounded-lg shadow-lg text-lg justify-center cursor-not-allowed opacity-50">
-            <FaCalendarAlt size={24} />
-            Twitch Events
-          </div>
-
-          {/* Request a Song - Available to all users */}
-          <a
-            href="/request-song"
-            className="flex items-center gap-3 bg-lime-500 hover:bg-lime-600 text-black font-bold text-center py-4 px-4 rounded-lg shadow-lg transition text-lg justify-center"
-          >
-            <FaMusic size={24} />
-            Request a Song
-          </a>
-
-          {/* Mod Panel: Song Requests - Only for moderators */}
-          {userRole?.isModerator && (
-            <a
-              href="/requests"
-              className="flex items-center gap-3 bg-red-500 hover:bg-red-600 text-white font-bold text-center py-4 px-4 rounded-lg shadow-lg transition text-lg justify-center"
-            >
-              <FaList size={24} />
-              Mod Panel: Song Requests
-            </a>
-          )}
-
-          {/* Mod Panel: Users - Only for moderators */}
-          {userRole?.isModerator && (
-            <a
-              href="/admin/users"
-              className="flex items-center gap-3 bg-blue-500 hover:bg-blue-600 text-white font-bold text-center py-4 px-4 rounded-lg shadow-lg transition text-lg justify-center"
-            >
-              <FaUsers size={24} />
-              Mod Panel: Users
-            </a>
-          )}
-
-          {/* Theme Editor - Only for moderators */}
-          {userRole?.isModerator && (
-            <a
-              href="/admin/themes"
-              className="flex items-center gap-3 bg-purple-500 hover:bg-purple-600 text-white font-bold text-center py-4 px-4 rounded-lg shadow-lg transition text-lg justify-center"
-            >
-              <FaPalette size={24} />
-              Spotify Theme Editor
-            </a>
-          )}
-        </div>
-
-        {/* Logout Section */}
-        <div className="text-center pt-4 border-t border-zinc-700">
-          <a
-            href="/api/discord/logout"
-            className="text-zinc-400 hover:text-zinc-300 transition-colors text-sm underline"
-          >
-            Log out of Discord
-          </a>
         </div>
       </div>
     </div>

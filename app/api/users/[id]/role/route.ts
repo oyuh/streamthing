@@ -70,6 +70,21 @@ export async function PATCH(
   }
   const { isModerator, isBanned } = data;
 
+  // ✅ Check if the target user is a streamer (protected from role changes)
+  const [targetUserRole] = await db
+    .select()
+    .from(userRoles)
+    .where(eq(userRoles.id, id))
+    .limit(1);
+
+  if (!targetUserRole) {
+    return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  }
+
+  if (targetUserRole.isStreamer) {
+    return NextResponse.json({ error: 'Cannot modify roles for streamer account' }, { status: 403 });
+  }
+
   // Validate that at least one of isModerator or isBanned is provided as boolean
   if (typeof isModerator !== 'boolean' && typeof isBanned !== 'boolean') {
     return NextResponse.json({ error: 'No valid fields provided for update' }, { status: 400 });
@@ -90,6 +105,7 @@ export async function PATCH(
         id: userRoles.id,
         username: userRoles.username,
         isModerator: userRoles.isModerator,
+        isStreamer: userRoles.isStreamer,
         isBanned: userRoles.isBanned,
         createdAt: userRoles.createdAt
       });
