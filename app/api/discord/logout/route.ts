@@ -1,9 +1,13 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    // Create response that redirects to home page
-    const response = NextResponse.redirect(new URL('/', process.env.NEXTAUTH_URL || 'http://localhost:3000'));
+    // Get the current request URL to redirect to the same domain
+    const url = new URL(request.url);
+    const baseUrl = `${url.protocol}//${url.host}`;
+
+    // Create response that redirects to home page of current domain
+    const response = NextResponse.redirect(new URL('/', baseUrl));
 
     // Clear the secure auth token
     response.cookies.set('auth_token', '', {
@@ -30,7 +34,10 @@ export async function GET() {
     console.error('Error during logout:', error);
 
     // Fallback: still redirect to home even if there's an error
-    const fallbackResponse = NextResponse.redirect(new URL('/', process.env.NEXTAUTH_URL || 'http://localhost:3000'));
+    // Use request URL to get current domain for fallback too
+    const url = new URL(request.url);
+    const baseUrl = `${url.protocol}//${url.host}`;
+    const fallbackResponse = NextResponse.redirect(new URL('/', baseUrl));
 
     // Try to clear cookies anyway
     fallbackResponse.cookies.set('auth_token', '', {
