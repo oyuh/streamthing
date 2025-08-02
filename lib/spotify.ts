@@ -126,12 +126,26 @@ export async function getNowPlaying(): Promise<{
     };
   } catch (err: any) {
     if (err.response?.status === 401) {
+      console.log('🔄 Token expired, refreshing...');
       const newToken = await refreshAccessToken();
-      if (!newToken) return null;
+      if (!newToken) {
+        console.error('❌ Failed to refresh token');
+        return null;
+      }
       return await getNowPlaying(); // retry after refresh
     }
 
-    console.error('Spotify API Error:', err.response?.data || err.message);
+    // More specific error logging
+    if (err.response?.status === 429) {
+      console.warn('⚠️ Spotify API rate limited');
+    } else if (err.response?.status === 500) {
+      console.warn('⚠️ Spotify server error (temporary)');
+    } else if (err.response?.status === 502 || err.response?.status === 503) {
+      console.warn('⚠️ Spotify service temporarily unavailable');
+    } else {
+      console.error('❌ Spotify API Error:', err.response?.data || err.message);
+    }
+
     return null;
   }
 }

@@ -23,6 +23,9 @@ dependencies:
   react-dom:
     specifier: latest
     version: 19.1.1(react@19.1.1)
+  react-icons:
+    specifier: 5.5.0
+    version: 5.5.0(react@19.1.1)
   tmi.js:
     specifier: ^1.8.5
     version: 1.8.5
@@ -2272,6 +2275,14 @@ packages:
     dependencies:
       react: 19.1.1
       scheduler: 0.26.0
+    dev: false
+
+  /react-icons@5.5.0(react@19.1.1):
+    resolution: {integrity: sha512-MEFcXdkP3dLo8uumGI5xN3lDFNsRtrjbOEKDLD7yv76v4wpnEq2Lt2qeHaQOr34I/wPN3s3+N08WkQ+CW37Xiw==}
+    peerDependencies:
+      react: '*'
+    dependencies:
+      react: 19.1.1
     dev: false
 
   /react@19.1.1:

@@ -1,0 +1,377 @@
+SPOTIFY OVERLAY THEME IDEAS
+============================
+
+Here are some cool theme variations you can create in the Theme Editor (/admin/themes):
+
+1. NEON GLOW THEME
+------------------
+#nowPlaying {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  color: #00ff88;
+  font-family: 'Courier New', monospace;
+  padding: 25px;
+  background: linear-gradient(45deg, rgba(0,0,0,0.9), rgba(20,20,40,0.9));
+  border-radius: 15px;
+  border: 2px solid #00ff88;
+  box-shadow: 0 0 20px rgba(0,255,136,0.3);
+  transition: opacity 0.5s ease;
+}
+
+#albumArt {
+  height: 80px;
+  width: 80px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid #00ff88;
+  box-shadow: 0 0 15px rgba(0,255,136,0.5);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 15px rgba(0,255,136,0.5); }
+  50% { box-shadow: 0 0 25px rgba(0,255,136,0.8); }
+  100% { box-shadow: 0 0 15px rgba(0,255,136,0.5); }
+}
+
+#info { display: flex; flex-direction: column; }
+
+#track {
+  font-size: 20px;
+  font-weight: bold;
+  text-shadow: 0 0 10px rgba(0,255,136,0.7);
+  animation: glow 3s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from { text-shadow: 0 0 10px rgba(0,255,136,0.7); }
+  to { text-shadow: 0 0 20px rgba(0,255,136,1), 0 0 30px rgba(0,255,136,0.5); }
+}
+
+#artist {
+  font-size: 16px;
+  opacity: 0.8;
+  color: #88ffaa;
+  margin-top: 5px;
+}
+
+#progressTime {
+  font-size: 12px;
+  opacity: 0.6;
+  margin-top: 8px;
+  color: #aaffcc;
+}
+
+2. RETRO WAVE THEME
+-------------------
+#nowPlaying {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  color: #ff006e;
+  font-family: 'Arial Black', sans-serif;
+  padding: 20px;
+  background: linear-gradient(135deg, #1a0033, #330066, #ff006e);
+  border-radius: 0;
+  border: 4px solid #ff006e;
+  box-shadow: 0 0 30px rgba(255,0,110,0.4);
+  transition: opacity 0.5s ease;
+  position: relative;
+}
+
+#nowPlaying::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 2px,
+    rgba(255,0,110,0.1) 2px,
+    rgba(255,0,110,0.1) 4px
+  );
+}
+
+#albumArt {
+  height: 75px;
+  width: 75px;
+  object-fit: cover;
+  border-radius: 0;
+  border: 3px solid #00ffff;
+  box-shadow: 5px 5px 0 #ff006e;
+  filter: contrast(1.2) saturate(1.3);
+}
+
+#info { display: flex; flex-direction: column; z-index: 1; }
+
+#track {
+  font-size: 18px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 3px 3px 0 #00ffff;
+  color: #ff006e;
+}
+
+#artist {
+  font-size: 14px;
+  color: #00ffff;
+  text-shadow: 2px 2px 0 #ff006e;
+  margin-top: 5px;
+}
+
+#progressTime {
+  font-size: 11px;
+  margin-top: 8px;
+  color: #ffff00;
+  font-weight: bold;
+}
+
+3. MINIMALIST GLASS THEME
+--------------------------
+#nowPlaying {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: white;
+  font-family: 'Segoe UI', sans-serif;
+  padding: 20px 25px;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.2);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  transition: opacity 0.5s ease;
+}
+
+#albumArt {
+  height: 60px;
+  width: 60px;
+  object-fit: cover;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+#info { display: flex; flex-direction: column; }
+
+#track {
+  font-size: 16px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.95);
+}
+
+#artist {
+  font-size: 13px;
+  color: rgba(255,255,255,0.7);
+  margin-top: 3px;
+}
+
+#progressTime {
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+  margin-top: 6px;
+}
+
+4. DARK GOTHIC THEME
+--------------------
+#nowPlaying {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  color: #cc0000;
+  font-family: 'Georgia', serif;
+  padding: 25px;
+  background: linear-gradient(45deg, #000000, #1a0000, #000000);
+  border-radius: 5px;
+  border: 2px solid #660000;
+  box-shadow: 0 0 25px rgba(204,0,0,0.3), inset 0 0 10px rgba(102,0,0,0.2);
+  transition: opacity 0.5s ease;
+}
+
+#albumArt {
+  height: 70px;
+  width: 70px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid #660000;
+  box-shadow: 0 0 10px rgba(204,0,0,0.4);
+  filter: sepia(20%) contrast(1.1);
+}
+
+#info { display: flex; flex-direction: column; }
+
+#track {
+  font-size: 18px;
+  font-weight: bold;
+  font-style: italic;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+  color: #ff3333;
+}
+
+#artist {
+  font-size: 14px;
+  color: #cc6666;
+  font-style: italic;
+  margin-top: 4px;
+}
+
+#progressTime {
+  font-size: 12px;
+  color: #994444;
+  margin-top: 8px;
+  font-variant: small-caps;
+}
+
+5. RAINBOW ANIMATED THEME
+--------------------------
+#nowPlaying {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  color: white;
+  font-family: 'Comic Sans MS', cursive;
+  padding: 20px;
+  background: linear-gradient(45deg, #ff0000, #ff7700, #ffff00, #00ff00, #0077ff, #7700ff, #ff0077);
+  background-size: 400% 400%;
+  animation: rainbowBg 3s ease infinite;
+  border-radius: 25px;
+  border: 3px solid white;
+  box-shadow: 0 0 20px rgba(255,255,255,0.3);
+  transition: opacity 0.5s ease;
+}
+
+@keyframes rainbowBg {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+#albumArt {
+  height: 75px;
+  width: 75px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid white;
+  animation: spin 4s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+#info { display: flex; flex-direction: column; }
+
+#track {
+  font-size: 19px;
+  font-weight: bold;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+  animation: colorShift 2s ease-in-out infinite alternate;
+}
+
+@keyframes colorShift {
+  0% { color: #ffffff; }
+  25% { color: #ffff00; }
+  50% { color: #00ffff; }
+  75% { color: #ff00ff; }
+  100% { color: #ffffff; }
+}
+
+#artist {
+  font-size: 15px;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+  margin-top: 4px;
+}
+
+#progressTime {
+  font-size: 12px;
+  margin-top: 6px;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+}
+
+6. TERMINAL/HACKER THEME
+------------------------
+#nowPlaying {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: #00ff00;
+  font-family: 'Courier New', monospace;
+  padding: 20px;
+  background: #000000;
+  border-radius: 0;
+  border: 2px solid #00ff00;
+  box-shadow: 0 0 10px rgba(0,255,0,0.3);
+  transition: opacity 0.5s ease;
+  position: relative;
+}
+
+#nowPlaying::before {
+  content: '> NOW_PLAYING.exe';
+  position: absolute;
+  top: -25px;
+  left: 0;
+  font-size: 10px;
+  color: #00ff00;
+  background: #000000;
+  padding: 2px 5px;
+}
+
+#albumArt {
+  height: 64px;
+  width: 64px;
+  object-fit: cover;
+  border-radius: 0;
+  border: 1px solid #00ff00;
+  filter: contrast(1.5) brightness(0.8) hue-rotate(120deg);
+}
+
+#info { display: flex; flex-direction: column; }
+
+#track {
+  font-size: 16px;
+  font-weight: bold;
+  color: #00ff00;
+  text-shadow: 0 0 5px rgba(0,255,0,0.5);
+}
+
+#track::before {
+  content: '$ track: ';
+  color: #ffff00;
+}
+
+#artist {
+  font-size: 13px;
+  color: #00cc00;
+  margin-top: 3px;
+}
+
+#artist::before {
+  content: '$ artist: ';
+  color: #ffff00;
+}
+
+#progressTime {
+  font-size: 11px;
+  color: #008800;
+  margin-top: 5px;
+}
+
+#progressTime::before {
+  content: '$ time: ';
+  color: #ffff00;
+}
+
+INSTRUCTIONS:
+=============
+1. Copy any of these CSS themes into the Theme Editor at /admin/themes
+2. Create a new theme with a descriptive name
+3. Paste the CSS code
+4. Save and activate the theme
+5. Check the /spotify overlay to see your theme in action!
+
+Feel free to mix and match elements from different themes to create your own unique style!

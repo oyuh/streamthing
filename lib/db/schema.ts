@@ -83,3 +83,16 @@ export const trackLogs = createTable(
     loggedAt: d.timestamp("logged_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
   })
 );
+
+// Spotify themes table
+export const spotifyThemes = createTable(
+  "spotify_themes",
+  (d) => ({
+    id: d.serial("id").primaryKey(),
+    name: d.text("name").notNull().unique(),
+    css: d.text("css").notNull(),
+    isActive: d.boolean("is_active").default(false),
+    createdAt: d.timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+    updatedAt: d.timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  })
+);
