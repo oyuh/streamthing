@@ -23,22 +23,29 @@ export default function ThemeEditor() {
   const [newThemeName, setNewThemeName] = useState('');
 
   // Default CSS for new themes
-  const defaultCSS = `#nowPlaying {
+  const defaultCSS = `/* Dark Minimal Theme */
+#nowPlaying {
+  --artist-accent: #9ca3af; /* fallback if not set by script */
   display: flex;
   align-items: center;
-  gap: 15px;
-  color: white;
-  font-family: 'Segoe UI', sans-serif;
-  padding: 20px;
-  transition: opacity 0.5s ease;
+  gap: 10px;
+  color: #e5e7eb;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.35);
+  box-shadow: 0 4px 18px rgba(0,0,0,0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: opacity 0.4s ease;
 }
 
 #albumArt {
-  height: 70px;
-  width: 70px;
+  height: 40px;
+  width: 40px;
   object-fit: cover;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+  border-radius: 9px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
 }
 
 #info {
@@ -47,22 +54,28 @@ export default function ThemeEditor() {
 }
 
 #track {
-  font-size: 18px;
-  font-weight: 600;
-  text-shadow: 0 2px 5px rgba(0,0,0,0.7);
+  font-size: 15px;
+  line-height: 1.1;
+  font-weight: 700;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.65);
+  color: #f9fafb;
 }
 
 #artist {
-  font-size: 14px;
-  opacity: 0.85;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--artist-accent);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
 
 #progressTime {
-  font-size: 12px;
-  opacity: 0.6;
-  margin-top: 6px;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  margin-top: 3px;
+  font-size: 11px;
+  letter-spacing: 0.2px;
+  color: #94a3b8;
+  opacity: 0.9;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
 }`;
 
   useEffect(() => {
