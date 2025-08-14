@@ -1,6 +1,7 @@
-'use client';
+ 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 
 const fetchTrack = async () => {
   const res = await fetch('/api/spotify/track');
@@ -17,6 +18,218 @@ function msToTime(ms: number) {
   const min = Math.floor(totalSec / 60);
   const sec = totalSec % 60;
   return `${min}:${sec.toString().padStart(2, '0')}`;
+}
+
+// Default compact widths to ensure long text starts scrolling sooner
+const DEFAULT_TRACK_WIDTH = 260; // px
+const DEFAULT_ARTIST_WIDTH = 220; // px
+const MIN_TRACK_WIDTH = 140; // px
+const MIN_ARTIST_WIDTH = 120; // px
+const MAX_TRACK_WIDTH = 360; // px
+const MAX_ARTIST_WIDTH = 280; // px
+
+// Auto-scroll long single-line text when it overflows its container
+function AutoScrollText({
+  text,
+  elementId,
+  className,
+  style,
+  speed = 45, // px per second
+  cutoffAt,
+}: {
+  text: string;
+  elementId: string; // use the original id (e.g., 'track', 'artist') for theme CSS
+  className?: string;
+  style?: CSSProperties;
+  speed?: number;
+  cutoffAt?: string | RegExp;
+}) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const textRef = useRef<HTMLDivElement | null>(null); // measure single segment
+  const scrollerRef = useRef<HTMLDivElement | null>(null); // element we animate
+  const measureRef = useRef<HTMLSpanElement | null>(null); // hidden measurer
+  const animRef = useRef<Animation | null>(null);
+  const [shouldScroll, setShouldScroll] = useState(false);
+  const [distance, setDistance] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const gap = 32; // px gap between duplicates
+
+  useEffect(() => {
+    const measure = () => {
+      const c = containerRef.current;
+      const t = textRef.current;
+      if (!c || !t) return;
+      // Smart cutoff width based on delimiter position
+      if (cutoffAt && measureRef.current) {
+        let idx = -1;
+        if (typeof cutoffAt === 'string') {
+          idx = text.indexOf(cutoffAt);
+        } else {
+          const m = text.match(cutoffAt);
+          idx = m?.index ?? -1;
+        }
+        if (idx > 0) {
+          const prefix = text.slice(0, idx).trimEnd();
+          measureRef.current.textContent = prefix || text;
+          const measured = Math.ceil(measureRef.current.scrollWidth + 6);
+          const minW = elementId === 'track' ? MIN_TRACK_WIDTH : MIN_ARTIST_WIDTH;
+          const maxW = elementId === 'track' ? MAX_TRACK_WIDTH : MAX_ARTIST_WIDTH;
+          const clamped = Math.max(minW, Math.min(maxW, measured));
+          const varName = elementId === 'track' ? '--track-width' : '--artist-width';
+          c.style.setProperty(varName, `${clamped}px`);
+          // Share the track width so artist lines up with the same cutoff
+          if (elementId === 'track') {
+            document.documentElement.style.setProperty('--smart-track-width', `${clamped}px`);
+          }
+        }
+      }
+
+      const cW = c.clientWidth;
+      const tW = t.scrollWidth;
+      if (tW > cW + 1) {
+        const dist = tW + gap; // continuous loop distance
+        setDistance(dist);
+        setDuration(Math.max(6, dist / speed));
+        setShouldScroll(true);
+      } else {
+        setShouldScroll(false);
+        setDistance(0);
+        setDuration(0);
+      }
+    };
+
+    measure();
+    // Re-measure after fonts load/settle
+    const t1 = setTimeout(measure, 250);
+    const t2 = setTimeout(measure, 800);
+    window.addEventListener('resize', measure);
+    // Observe container/text size changes (fonts, dynamic CSS)
+    const roC = new ResizeObserver(() => measure());
+    const roT = new ResizeObserver(() => measure());
+    if (containerRef.current) roC.observe(containerRef.current);
+    if (textRef.current) roT.observe(textRef.current);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      window.removeEventListener('resize', measure);
+      roC.disconnect();
+      roT.disconnect();
+    };
+  }, [text, speed]);
+
+  // Drive animation using Web Animations API where available (animate scroller)
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+
+    // Clear previous animation
+    animRef.current?.cancel();
+    animRef.current = null;
+
+    // Reset styles
+    el.style.animation = '';
+    el.style.transform = 'translateX(0)';
+
+    if (!shouldScroll || distance <= 0 || duration <= 0) {
+      return;
+    }
+
+    if (typeof (el as any).animate === 'function') {
+      animRef.current = el.animate(
+        [
+          { transform: 'translateX(0)' },
+          { transform: `translateX(${-distance}px)` },
+        ],
+        {
+          duration: duration * 1000,
+          iterations: Infinity,
+          easing: 'linear',
+        }
+      );
+    }
+
+    // Also set CSS animation as a secondary path to avoid browser WAAPI quirks in overlays
+    el.style.setProperty('--st-distance', `${distance}px`);
+    el.style.animationName = 'st-loop-x';
+    el.style.animationDuration = `${duration}s`;
+    el.style.animationTimingFunction = 'linear';
+    el.style.animationIterationCount = 'infinite';
+    el.style.animationDirection = 'normal';
+
+    return () => {
+      animRef.current?.cancel();
+      animRef.current = null;
+    };
+  }, [shouldScroll, distance, duration]);
+
+  const enforcedWidth = style?.width; // rely on CSS rule for defaults; only honor explicit style width
+
+  return (
+    <div
+      id={elementId}
+      ref={containerRef}
+      className={className}
+      style={{
+        ...style,
+        flex: '0 1 auto',
+        ...(enforcedWidth ? { width: enforcedWidth as any } : {}),
+        minWidth: 0,
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+        position: 'relative',
+      }}
+    >
+      <div
+        ref={scrollerRef}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'baseline',
+          gap: `${gap}px`,
+          willChange: shouldScroll ? 'transform' : undefined,
+        }}
+      >
+        <div
+          ref={textRef}
+          style={{ display: 'inline-block', whiteSpace: 'nowrap' }}
+        >
+          {text}
+        </div>
+        {shouldScroll && (
+          <div aria-hidden="true" style={{ display: 'inline-block', whiteSpace: 'nowrap' }}>
+            {text}
+          </div>
+        )}
+        {/* Hidden measurer for smart cutoff */}
+        <span
+          ref={measureRef}
+          style={{
+            position: 'absolute',
+            visibility: 'hidden',
+            whiteSpace: 'nowrap',
+            pointerEvents: 'none',
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+// Utility: remove common noisy version tags from titles and clamp to a max length
+function cleanTitle(title: string): string {
+  let t = title;
+  // Remove trailing " - 20xx Remaster/Remastered"
+  t = t.replace(/\s*-\s*\d{4}\s*Remaster(?:ed)?\b.*$/i, '');
+  t = t.replace(/\s*-\s*Remaster(?:ed)?\b.*$/i, '');
+  // Remove common version parentheticals
+  t = t.replace(/\s*\((?:Single|Radio|Mono|Stereo|Remaster(?:ed)?|Version|Edit|Live|Deluxe|Extended|Acoustic|Demo|Remix|Re-?recorded)[^)]*\)\s*/gi, ' ');
+  // Collapse whitespace
+  t = t.replace(/\s{2,}/g, ' ').trim();
+  return t;
+}
+
+function clampText(text: string, maxChars: number): string {
+  if (!text) return text;
+  return text.length > maxChars ? text.slice(0, Math.max(0, maxChars - 1)) + '…' : text;
 }
 
 export default function SpotifyOverlay() {
@@ -134,12 +347,43 @@ export default function SpotifyOverlay() {
   return (
     <>
       {/* Dynamic CSS from database */}
-  <style dangerouslySetInnerHTML={{ __html: activeTheme?.css || fallbackCSS }} />
+      <style dangerouslySetInnerHTML={{ __html: activeTheme?.css || fallbackCSS }} />
+      {/* Keyframes fallback if Web Animations API is unavailable */}
+      <style>{`
+        @keyframes st-scroll-x {
+          from { transform: translateX(0); }
+          to { transform: translateX(calc(-1 * var(--st-distance, 0px))); }
+        }
+        @keyframes st-loop-x {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(calc(-1 * var(--st-distance, 0px))); }
+        }
+      `}</style>
+      {/* Enforce marquee prerequisites regardless of theme CSS */}
+      <style>{`
+        #info { min-width: 0 !important; }
+        #track, #artist {
+          overflow: hidden !important;
+          white-space: nowrap !important;
+          display: block !important;
+          max-width: min(75vw, 560px) !important;
+        }
+      `}</style>
+      {/* Force compact widths even if a theme tries to override with !important; allow theme to tune via CSS vars.
+          If AutoScrollText computes a smart cutoff for the track, both will align to it via --smart-track-width. */}
+      <style>{`
+        #track { width: var(--track-width, var(--smart-track-width, ${DEFAULT_TRACK_WIDTH}px)) !important; }
+        #artist { width: var(--artist-width, var(--smart-track-width, ${DEFAULT_ARTIST_WIDTH}px)) !important; }
+      `}</style>
 
       <div
         id="nowPlaying"
         style={{
           opacity: show ? 1 : 0,
+          // Ensure layout works regardless of theme CSS
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
         }}
       >
         {track && (
@@ -149,13 +393,23 @@ export default function SpotifyOverlay() {
               src={track.albumArt}
               alt="Album Art"
             />
-            <div id="info">
-              <div id="track">
-                {track.track}
-              </div>
-              <div id="artist" style={{ color: 'var(--artist-accent)' }}>
-                {track.artist}
-              </div>
+            <div
+              id="info"
+              style={{
+                // Ensure text containers have a horizontal constraint
+                display: 'flex',
+                flexDirection: 'column',
+                minWidth: 0,
+                maxWidth: 'min(75vw, 560px)',
+              }}
+            >
+              <AutoScrollText elementId="track" text={cleanTitle(track.track)} cutoffAt="-" />
+              <AutoScrollText
+                elementId="artist"
+                text={track.artist}
+                cutoffAt="," 
+                style={{ color: 'var(--artist-accent)' }}
+              />
               <div id="progressTime">
                 {msToTime(track.progress)} / {msToTime(track.duration)}
               </div>
