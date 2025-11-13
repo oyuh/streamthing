@@ -64,6 +64,7 @@ export const userRoles = createTable(
   (d) => ({
     id: d.text("id").primaryKey(), // Discord ID
     username: d.text("username"),
+    avatar: d.text("avatar"), // Discord avatar hash
     isModerator: d.boolean("is_moderator").default(false),
     isStreamer: d.boolean("is_streamer").default(false),
     isBanned: d.boolean("is_banned").default(false),
@@ -95,5 +96,36 @@ export const spotifyThemes = createTable(
     isActive: d.boolean("is_active").default(false),
     createdAt: d.timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
     updatedAt: d.timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  })
+);
+
+// Request logs table - auto-deletes after 7 days
+export const requestLogs = createTable(
+  "request_logs",
+  (d) => ({
+    id: d.text("id").primaryKey().default(sql`gen_random_uuid()`),
+    requestId: d.text("request_id").notNull(),
+    action: d.text("action").notNull(), // 'approved' | 'rejected' | 'banned'
+    moderatorId: d.text("moderator_id").notNull(),
+    moderatorUsername: d.text("moderator_username").notNull(),
+    requestedBy: d.text("requested_by").notNull(),
+    songTitle: d.text("song_title").notNull(),
+    songArtist: d.text("song_artist").notNull(),
+    createdAt: d.timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  })
+);
+
+// Ban logs table - permanent record of all bans and unbans
+export const banLogs = createTable(
+  "ban_logs",
+  (d) => ({
+    id: d.text("id").primaryKey().default(sql`gen_random_uuid()`),
+    userId: d.text("user_id").notNull(), // Discord ID of banned/unbanned user
+    username: d.text("username").notNull(),
+    action: d.text("action").notNull(), // 'banned' | 'unbanned'
+    reason: d.text("reason"), // Optional reason for ban/unban
+    moderatorId: d.text("moderator_id").notNull(),
+    moderatorUsername: d.text("moderator_username").notNull(),
+    createdAt: d.timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
   })
 );

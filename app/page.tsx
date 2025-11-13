@@ -23,6 +23,7 @@ type DiscordUser = {
 export default function Home() {
   const [discordUser, setDiscordUser] = useState<DiscordUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentTrack, setCurrentTrack] = useState<any>(null);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -32,6 +33,21 @@ export default function Home() {
           const data = await res.json();
           if (data?.username) {
             setDiscordUser(data);
+            
+            // Fetch current track if user is moderator
+            if (data.isModerator || data.isStreamer) {
+              try {
+                const trackRes = await fetch('/api/spotify/track');
+                if (trackRes.ok) {
+                  const trackData = await trackRes.json();
+                  if (trackData?.track) {
+                    setCurrentTrack(trackData);
+                  }
+                }
+              } catch (err) {
+                console.warn('Unable to load track', err);
+              }
+            }
           }
         }
       } catch (error) {
@@ -43,6 +59,27 @@ export default function Home() {
 
     void loadUser();
   }, []);
+
+  // Poll for track updates every second if user is moderator
+  useEffect(() => {
+    if (!discordUser?.isModerator && !discordUser?.isStreamer) return;
+
+    const pollTrack = setInterval(async () => {
+      try {
+        const trackRes = await fetch('/api/spotify/track');
+        if (trackRes.ok) {
+          const trackData = await trackRes.json();
+          if (trackData?.track) {
+            setCurrentTrack(trackData);
+          }
+        }
+      } catch (err) {
+        console.warn('Unable to poll track', err);
+      }
+    }, 1000);
+
+    return () => clearInterval(pollTrack);
+  }, [discordUser]);
 
   if (loading) {
     return (
@@ -116,15 +153,26 @@ export default function Home() {
 
               {isMod && (
                 <Link
-                  href="/api/spotify/auth?login=true"
+                  href="/spotify"
                   className="group flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/30 p-4 transition hover:border-zinc-700 hover:bg-zinc-900/50"
                 >
                   <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5">
                     <FaSpotify className="text-sm text-white/60" />
                   </div>
-                  <div>
-                    <p className="text-sm font-medium">Connect Spotify</p>
-                    <p className="text-xs text-zinc-500">Link account</p>
+                  <div className="flex-1 min-w-0">
+                    {currentTrack?.track ? (
+                      <>
+                        <p className="text-sm font-medium truncate">{currentTrack.track}</p>
+                        <p className="text-xs text-zinc-500 truncate">
+                          {currentTrack.artist} · {currentTrack.progress ? `${Math.floor(currentTrack.progress / 60000)}:${String(Math.floor((currentTrack.progress % 60000) / 1000)).padStart(2, '0')} / ${Math.floor(currentTrack.duration / 60000)}:${String(Math.floor((currentTrack.duration % 60000) / 1000)).padStart(2, '0')}` : 'Loading...'}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-sm font-medium">Go to Spotify Widget</p>
+                        <p className="text-xs text-zinc-500">View overlay</p>
+                      </>
+                    )}
                   </div>
                 </Link>
               )}

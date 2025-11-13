@@ -64,7 +64,10 @@ export async function GET(req: NextRequest) {
     const existing = await db.select().from(userRoles).where(eq(userRoles.id, user.id)).limit(1);
     if (existing.length > 0) {
       // Update existing user, preserve existing roles unless they're the streamer
-      const updateData: any = { username: user.username };
+      const updateData: any = { 
+        username: user.username,
+        avatar: user.avatar || null,
+      };
       if (isStreamerUser) {
         updateData.isStreamer = true;
         updateData.isModerator = true; // Streamers are also moderators
@@ -79,6 +82,7 @@ export async function GET(req: NextRequest) {
       await db.insert(userRoles).values({
         id: user.id,
         username: user.username,
+        avatar: user.avatar || null,
         isStreamer: isStreamerUser,
         isModerator: isStreamerUser, // Streamers are also moderators
       });

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db/client'
-import { userRoles } from '@/lib/db/schema'
+import { userRoles, banLogs } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import { cookies } from 'next/headers';
 import { getUserFromToken } from '@/lib/auth';
@@ -68,7 +68,7 @@ export async function PATCH(
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
-  const { isModerator, isBanned } = data;
+  const { isModerator, isBanned, reason } = data;
 
   // ✅ Check if the target user is a streamer (protected from role changes)
   const [targetUserRole] = await db
@@ -96,6 +96,10 @@ export async function PATCH(
   if (typeof isBanned === 'boolean') updates.isBanned = isBanned;
 
   try {
+    // Check if ban status is changing
+    const wasBanned = targetUserRole.isBanned;
+    const willBeBanned = typeof isBanned === 'boolean' ? isBanned : wasBanned;
+
     // Perform the update in the database, returning the updated record
     const updatedUsers = await db
       .update(userRoles)
@@ -113,6 +117,19 @@ export async function PATCH(
       // No user found with that ID
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
+
+    // Log ban/unban action
+    if (typeof isBanned === 'boolean' && wasBanned !== willBeBanned) {
+      await db.insert(banLogs).values({
+        userId: id,
+        username: targetUserRole.username || id,
+        action: willBeBanned ? 'banned' : 'unbanned',
+        reason: reason || (willBeBanned ? 'Banned by moderator' : 'Unbanned by moderator'),
+        moderatorId: user.id,
+        moderatorUsername: user.username || 'Unknown',
+      });
+    }
+
     // Return the updated user role data
     return NextResponse.json(updatedUsers[0]);
   } catch (err) {

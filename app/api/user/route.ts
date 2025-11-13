@@ -48,6 +48,7 @@ export async function GET() {
     return NextResponse.json({
       id: userRole.id,
       username: userRole.username,
+      avatar: userRole.avatar,
       isModerator: userRole.isModerator,
       isStreamer: userRole.isStreamer,
       isBanned: userRole.isBanned,

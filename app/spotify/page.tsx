@@ -238,6 +238,7 @@ export default function SpotifyOverlay() {
   const [show, setShow] = useState(false);
   const [activeTheme, setActiveTheme] = useState<any | null>(null);
   const [artistColor, setArtistColor] = useState<string>('');
+  const [authError, setAuthError] = useState(false);
 
   // Built-in fallback CSS (Dark Minimal) if no theme is active
   const fallbackCSS = `#nowPlaying { --artist-accent: #9ca3af; display:flex; align-items:center; gap:10px; color:#e5e7eb; font-family:'Segoe UI', system-ui, -apple-system, sans-serif; padding:10px 12px; border-radius:10px; background:rgba(0,0,0,0.35); box-shadow:0 4px 18px rgba(0,0,0,0.45); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); transition:opacity .4s ease } #albumArt{ height:40px; width:40px; object-fit:cover; border-radius:9px; box-shadow:0 4px 12px rgba(0,0,0,.6) } #info{ display:flex; flex-direction:column } #track{ font-size:15px; line-height:1.1; font-weight:700; text-shadow:0 1px 3px rgba(0,0,0,.65); color:#f9fafb } #artist{ margin-top:2px; font-size:13px; line-height:1; color:var(--artist-accent); text-shadow:0 1px 2px rgba(0,0,0,.5) } #progressTime{ margin-top:3px; font-size:11px; letter-spacing:.2px; color:#94a3b8; opacity:.9; text-shadow:0 1px 2px rgba(0,0,0,.4) }`;
@@ -261,6 +262,13 @@ export default function SpotifyOverlay() {
       try {
         const data = await fetchTrack();
 
+        // Check if it's an auth error
+        if (data?.error && (data.error.includes('Unauthorized') || data.error.includes('No token'))) {
+          setAuthError(true);
+          setShow(false);
+          return;
+        }
+
         // If we get no data or an error, keep showing the last known track
         if (!data || !data.track) {
           // Only hide if we've never had a track before
@@ -272,6 +280,7 @@ export default function SpotifyOverlay() {
           return;
         }
 
+        setAuthError(false);
         const currentTrack = `${data.track} - ${data.artist}`;
 
         if (currentTrack !== lastTrack) {
@@ -375,6 +384,49 @@ export default function SpotifyOverlay() {
         #track { width: var(--track-width, var(--smart-track-width, ${DEFAULT_TRACK_WIDTH}px)) !important; }
         #artist { width: var(--artist-width, var(--smart-track-width, ${DEFAULT_ARTIST_WIDTH}px)) !important; }
       `}</style>
+
+      {authError && (
+        <div style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          zIndex: 1000,
+        }}>
+          <a
+            href="/api/spotify/auth?login=true"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '16px 24px',
+              background: 'rgba(0, 0, 0, 0.9)',
+              border: '1px solid rgba(30, 215, 96, 0.3)',
+              borderRadius: '12px',
+              color: '#1ed760',
+              textDecoration: 'none',
+              fontFamily: 'system-ui, -apple-system, sans-serif',
+              fontSize: '15px',
+              fontWeight: 600,
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = 'rgba(30, 215, 96, 0.1)';
+              e.currentTarget.style.borderColor = '#1ed760';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = 'rgba(0, 0, 0, 0.9)';
+              e.currentTarget.style.borderColor = 'rgba(30, 215, 96, 0.3)';
+            }}
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+            </svg>
+            <span>Connect Spotify</span>
+          </a>
+        </div>
+      )}
 
       <div
         id="nowPlaying"
