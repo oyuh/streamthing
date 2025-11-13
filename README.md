@@ -1,4 +1,4 @@
-# streamthing 🎵
+﻿# streamthing
 
 [![Next.js](https://img.shields.io/badge/Next.js-15-blue?logo=nextdotjs)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-blue?logo=react)](https://react.dev/)
@@ -13,376 +13,206 @@
 
 ## Overview
 
-**streamthing** is a powerful streaming overlay and management system built for modern content creators. This self-hosted platform provides real-time Spotify integration, dynamic themes, song request management, and secure user authentication. Each deployment is designed for a single creator to ensure optimal security and performance.
+streamthing is a self-hosted streaming overlay and management platform that brings real-time Spotify integration, request moderation, dynamic themes, and secure user roles into a single dashboard. Each deployment is designed for a single creator so you can stay in control of your data and branding.
 
-**🚀 Deploy for free:** Use [Vercel](https://vercel.com) for hosting and [Neon](https://neon.tech) for PostgreSQL database - no credit card required!
-
----
-
-## ✨ Features
-
-### 🎵 Spotify Integration
-- **Real-time now playing overlays** with customizable themes
-- **Dynamic CSS theming system** with live editor and preview
-- **Track history logging** with public API access
-- **Song request system** with moderation tools
-
-### 🔐 Secure Authentication
-- **JWT-based authentication** with encrypted tokens
-- **Discord OAuth login** with role-based permissions
-- **User management** with moderator and ban capabilities
-- **Tamper-proof sessions** - users cannot fake their identity
-
-### 🎨 Modern UI
-- **Beautiful gradient design** with React Icons
-- **Responsive layout** that works on all devices
-- **Professional landing page** for non-authenticated users
-- **Dark theme** optimized for streaming
-
-### 🛡️ Security & Performance
-- **Self-hosted architecture** - each deployment for one creator
-- **HttpOnly cookies** with secure JWT tokens
-- **Role-based access control** for admin features
-- **Automatic token expiration** and cleanup
+Deploy the full stack for free on Vercel (hosting and serverless functions) with Neon providing the managed PostgreSQL database.
 
 ---
 
-## 📱 Pages & Features
+## Feature Highlights
 
-### 🏠 Dashboard (`/`)
-- **Authentication status** and user information
-- **Quick access buttons** to all features (role-based visibility)
-- **Version information** with live git commit hash
-- **Beautiful landing page** for non-authenticated users
-- **Secure logout** functionality
+### Spotify Integration
+- Real-time “now playing” overlays designed for OBS and browser sources
+- Dynamic theme system powered by database-stored CSS
+- Track history logging with a public API
+- Viewer song requests with moderator approval flow
 
-### 🎵 Spotify Overlay (`/spotify`)
-- **Real-time now playing display** for OBS/streaming software
-- **Dynamic theme loading** from database
-- **Resilient API handling** with graceful error recovery
-- **Hover effects** and smooth animations
-- **Customizable CSS** for any streaming setup
+### Authentication and Access
+- Discord OAuth login with JWT-backed sessions
+- Role-based control for streamers, moderators, and viewers
+- Self-service logout and access revocation endpoints
+- Tamper-resistant cookies and expiry handling
 
-### 🎨 Theme Editor (`/admin/themes`)
-- **Live CSS editor** with syntax highlighting
-- **Real-time preview** of theme changes
-- **Multiple pre-built themes** (neon, retro, minimalist, etc.)
-- **Save and activate themes** instantly
-- **Theme management** with create, edit, delete
+### Interface and Experience
+- Responsive dark UI built with Next.js App Router and Tailwind CSS
+- Focused landing experience for new viewers
+- Unified look and feel across dashboard, admin, and public pages
+- Built-in overlay preview and theme editing workflow
 
-### 🎤 Song Requests (`/request-song`)
-- **Public song request form** for viewers
-- **Spotify URL validation** and track info parsing
-- **User authentication** required for requests
-- **Ban protection** - banned users cannot submit
-- **Beautiful error handling** and success messages
-
-### 🛡️ Request Moderation (`/requests`)
-- **Moderator-only access** with role verification
-- **Review pending requests** with full track info
-- **Approve or reject** songs with one click
-- **Search and filter** requests by title, artist, or user
-- **Real-time stats** and queue management
-
-### 👥 User Management (`/admin/users`)
-- **Admin-only user panel** with search functionality
-- **Promote/demote moderators** with role management
-- **Ban/unban users** with instant effect
-- **User statistics** and role overview
-- **Secure role updates** with database persistence
+### Operations and Security
+- Drizzle ORM for type-safe queries and migrations
+- PostgreSQL schema tuned for low-latency lookups
+- HttpOnly cookie enforcement and rate-limited API routes
+- Ready for single-tenant, self-hosted deployments
 
 ---
 
-## 🔌 API Routes
+## Application Pages
 
-All API routes use Next.js App Router with TypeScript and proper error handling.
+| Route | Audience | Purpose |
+|-------|----------|---------|
+| `/` | Authenticated users | Dashboard entry point with quick links, role badges, and version info |
+| `/spotify` | OBS/browser source | Minimal "now playing" overlay with automatic marquee text |
+| `/request-song` | Authenticated viewers | Submit Spotify links that feed the moderation queue |
+| `/requests` | Moderators | Review, approve, and reject viewer song requests |
+| `/admin/users` | Streamer or moderators | Promote, demote, and ban users with audit-friendly controls |
+| `/admin/themes` | Streamer | Edit CSS themes and activate the overlay design you want |
 
-### 🎵 Spotify Integration
-- **`GET /api/spotify/track`** - Current playing track (public)
-- **`GET /api/spotify/track-logs`** - Track history with pagination
-  - Query params: `limit`, `page`, `start`, `end` (max 7 days)
-- **`GET /api/spotify/auth`** - Spotify OAuth login redirect
-- **`GET /api/spotify/auth/callback`** - OAuth callback handler
-- **`POST /api/spotify/submit-link`** - Submit song request
-- **`GET /api/spotify/requests`** - Get pending requests (mods only)
-- **`PATCH /api/spotify/requests`** - Approve/reject requests (mods only)
-- **`GET /api/spotify/themes`** - Get active theme CSS
-- **`POST /api/spotify/themes`** - Create/update themes (admin only)
-
-### 🔐 Authentication & Users
-- **`GET /api/user`** - Current user info (JWT-secured)
-- **`GET /api/discord/login`** - Discord OAuth login
-- **`GET /api/discord/callback`** - Discord OAuth callback
-- **`GET /api/discord/logout`** - Secure logout with token cleanup
-- **`GET /api/users`** - List all users (admin only)
-- **`GET /api/users/[id]/role`** - Get user role info
-- **`PATCH /api/users/[id]/role`** - Update user roles (admin only)
-
-### 🎯 Twitch Integration (Coming Soon)
-- **`GET /api/twitch/auth`** - Twitch OAuth (placeholder)
-- **`GET /api/twitch/callback`** - OAuth callback (placeholder)
-- **`POST /api/twitch/webhook`** - Event webhooks (placeholder)
-- **`GET /api/twitch/events`** - Recent events (placeholder)
-- **`GET /api/twitch/status`** - Connection status (placeholder)
-
-### 📊 Utility
-- **`GET /api/version`** - Git commit hash and version info
+Back-end routes under `/api` expose the same functionality for custom integrations.
 
 ---
 
-## 🗄️ Database Schema
+## Customizing the Landing Page
 
-Using **Drizzle ORM** with **PostgreSQL** for type-safe database operations:
+The default landing page (`app/components/LandingPage.tsx`) is a simple temporary placeholder that shows a warning banner and two action buttons (Login with Discord, Request a Song).
 
-### Tables
-- **`track_logs`** - Spotify track history
-  - `id`, `track`, `artist`, `albumArt`, `duration`, `loggedAt`
-- **`userRoles`** - User authentication and permissions
-  - `id`, `username`, `isModerator`, `isBanned`
-- **`song_requests`** - Song request queue
-  - `id`, `spotifyUri`, `title`, `artist`, `requestedBy`, `createdAt`
-- **`spotify_themes`** - Dynamic CSS themes
-  - `id`, `name`, `css`, `isActive`, `createdAt`, `updatedAt`
+### To Remove or Replace the Landing Page
 
-### ORM Features
-- **Type-safe queries** with full TypeScript support
-- **Automatic migrations** with `drizzle-kit`
-- **Connection pooling** for optimal performance
-- **Prepared statements** for security
+**Option 1: Replace with your own design**
+1. Open `app/components/LandingPage.tsx`
+2. Replace the entire component with your custom landing page
+3. Keep the same component name and export: `export default function LandingPage()`
+
+**Option 2: Remove it entirely and redirect**
+1. Open `app/page.tsx`
+2. Remove the `<LandingPage />` component
+3. Add a redirect or alternative content for non-authenticated users
+
+The landing page only appears when users are not logged in. Authenticated users see the dashboard automatically.
 
 ---
 
-## 🛠️ Tech Stack
+## API Surface
 
-### Frontend
-- **[Next.js 15](https://nextjs.org/)** - React framework with App Router
-- **[React 19](https://react.dev/)** - Latest React with modern features
-- **[TypeScript](https://www.typescriptlang.org/)** - Type safety throughout
-- **[Tailwind CSS](https://tailwindcss.com/)** - Utility-first styling
-- **[React Icons](https://react-icons.github.io/react-icons/)** - Professional icon library
+All route handlers are implemented with the Next.js App Router using TypeScript.
 
-### Backend
-- **[Next.js API Routes](https://nextjs.org/docs/app/building-your-application/routing/route-handlers)** - Serverless functions
-- **[Drizzle ORM](https://orm.drizzle.team/)** - Type-safe database queries
-- **[PostgreSQL](https://www.postgresql.org/)** - Robust relational database
-- **[JWT](https://jwt.io/)** - Secure token-based authentication
+**Spotify**
+- `GET /api/spotify/track` returns the active track
+- `GET /api/spotify/track-logs` supports pagination and 7-day range filters
+- `POST /api/spotify/submit-link` submits a new request (auth required)
+- `PATCH /api/spotify/requests` processes queue actions (moderators)
+- `GET /api/spotify/themes` fetches themes; `POST`/`PUT` manage them
 
-### Integrations
-- **[Spotify Web API](https://developer.spotify.com/documentation/web-api/)** - Music data and authentication
-- **[Discord API](https://discord.com/developers/docs/)** - User authentication via OAuth
-- **Twitch API** - Future integration for stream events
+**Authentication and Users**
+- `GET /api/user` returns session details
+- `GET /api/discord/login|callback|logout` handle OAuth lifecycle
+- `GET /api/users` and nested routes manage roles and bans
 
-### Deployment
-- **[Vercel](https://vercel.com/)** - Hosting and serverless functions (free tier)
-- **[Neon](https://neon.tech/)** - Serverless PostgreSQL (free tier)
-- **[pnpm](https://pnpm.io/)** - Fast, disk space efficient package manager
+**Utility**
+- `GET /api/version` surfaces the deployed git commit
+- Twitch placeholders are stubbed at `/api/twitch/*` for upcoming work
 
 ---
 
-## 🚀 Quick Start
+## Data Model
 
-### Free Deployment (Recommended)
+Drizzle ORM models the core tables:
+- `track_logs` captures historical playback details
+- `song_requests` stores incoming viewer submissions
+- `spotify_themes` houses overlay CSS and activation state
+- `userRoles` maps Discord identities to permissions
 
-1. **Fork this repository** on GitHub
-2. **Deploy to Vercel:**
-   - Connect your GitHub account to Vercel
-   - Import your forked repository
-   - Vercel will automatically detect Next.js settings
-3. **Set up Neon database:**
-   - Create free account at [neon.tech](https://neon.tech)
-   - Create a new project and copy the connection string
-4. **Configure environment variables** in Vercel dashboard
-5. **Set up Discord/Spotify apps** (see setup section below)
+Run migrations and schema updates with `pnpm run db:push` or `pnpm migrate`.
+
+---
+
+## Tech Stack
+
+- Next.js 15 with the App Router and React Server Components
+- React 19 with TypeScript strict mode
+- Tailwind CSS 4 and PostCSS for styling
+- Drizzle ORM on top of PostgreSQL (Neon or self-hosted)
+- JWT for session integrity and Discord OAuth for identity
+- pnpm for fast, deterministic installs
+
+---
+
+## Quick Start
+
+### Free Deployment (Vercel + Neon)
+1. Fork the repository.
+2. Import the repo into Vercel and deploy with the default Next.js settings.
+3. Provision a Neon PostgreSQL project and copy the connection string.
+4. Populate environment variables in the Vercel dashboard (see below).
+5. Create Discord and Spotify applications and configure redirect URIs.
 
 ### Local Development
+```bash
+git clone https://github.com/oyuh/streamthing.git
+cd streamthing
+pnpm install
+cp .env.local.example .env.local
+# fill in environment variables
+pnpm run db:push
+pnpm dev
+```
 
-#### Prerequisites
-- **Node.js 20+**
-- **pnpm 8+** (recommended) or npm/yarn
-- **PostgreSQL database** (local or cloud)
-
-#### Setup Steps
-
-1. **Clone and install:**
-   ```bash
-   git clone https://github.com/oyuh/streamthing.git
-   cd streamthing
-   pnpm install
-   ```
-
-2. **Environment setup:**
-   ```bash
-   cp .env.local.example .env.local
-   # Edit .env.local with your credentials (see section below)
-   ```
-
-3. **Database setup:**
-   ```bash
-   pnpm run db:push
-   ```
-
-4. **Start development:**
-   ```bash
-   pnpm dev
-   ```
-
-5. **Production build:**
-   ```bash
-   pnpm build
-   pnpm start
-   ```
+Create a production build with `pnpm build` and run it locally using `pnpm start`.
 
 ---
 
-## ⚙️ Configuration
+## Environment Variables
 
-### Required Environment Variables
+Copy `.env.local.example` to `.env.local` and provide the following values:
 
-Create `.env.local` from `.env.local.example` and configure:
-
-#### Authentication & Security
-```bash
-# JWT secret for secure authentication (generate a long random string)
-JWT_SECRET=your_super_secret_jwt_key_here
-
-# Discord OAuth (create app at https://discord.com/developers/applications)
-DISCORD_CLIENT_ID=your_discord_client_id
-DISCORD_CLIENT_SECRET=your_discord_client_secret
-DISCORD_REDIRECT_URI=https://yourdomain.com/api/discord/callback
 ```
+JWT_SECRET=long_random_string
+NEXT_PUBLIC_SITE_URL=https://yourdomain.com
 
-#### Spotify Integration
-```bash
-# Spotify Web API (create app at https://developer.spotify.com/dashboard)
-SPOTIFY_CLIENT_ID=your_spotify_client_id
-SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
+# Discord OAuth
+DISCORD_CLIENT_ID=...
+DISCORD_CLIENT_SECRET=...
+DISCORD_REDIRECT_URI=https://yourdomain.com/api/discord/callback
+
+# Spotify OAuth
+SPOTIFY_CLIENT_ID=...
+SPOTIFY_CLIENT_SECRET=...
 SPOTIFY_REDIRECT_URI=https://yourdomain.com/api/spotify/auth/callback
 
-# Optional: Development access token for testing
-DEV_SPOTIFY_ACCESS_TOKEN=your_dev_token_here
-```
+# Database (Neon, Vercel Postgres, or self-hosted)
+DATABASE_URL=postgres://user:pass@host:port/db?sslmode=require
 
-#### Database
-```bash
-# PostgreSQL connection string (Neon, Vercel Postgres, or self-hosted)
-DATABASE_URL=postgres://username:password@host:port/database?sslmode=require
-```
-
-#### Optional: Twitch (Coming Soon)
-```bash
-TWITCH_CLIENT_ID=your_twitch_client_id
-TWITCH_CLIENT_SECRET=your_twitch_client_secret
+# Optional Twitch placeholders
+TWITCH_CLIENT_ID=...
+TWITCH_CLIENT_SECRET=...
 TWITCH_REDIRECT_URI=https://yourdomain.com/api/twitch/callback
-TWITCH_SECRET=webhook_secret_string
+TWITCH_SECRET=...
 ```
 
-#### Site Configuration
-```bash
-# Your domain (for redirects and CORS)
-NEXT_PUBLIC_SITE_URL=https://yourdomain.com
-```
+---
 
-### Setting Up OAuth Apps
+## Development Tasks
 
-#### Discord Application
-1. Go to [Discord Developer Portal](https://discord.com/developers/applications)
-2. Create new application
-3. Go to OAuth2 → General
-4. Add redirect URL: `https://yourdomain.com/api/discord/callback`
-5. Copy Client ID and Client Secret
-
-#### Spotify Application
-1. Go to [Spotify Dashboard](https://developer.spotify.com/dashboard)
-2. Create new app
-3. Add redirect URL: `https://yourdomain.com/api/spotify/auth/callback`
-4. Copy Client ID and Client Secret
+- `pnpm dev` launches the Next.js development server.
+- `pnpm lint` and `pnpm lint:fix` run ESLint.
+- `pnpm type-check` verifies the TypeScript project.
+- `pnpm run db:push` synchronizes the Drizzle schema.
 
 ---
 
-## 📦 Package Manager Migration
+## Roadmap
 
-This project uses **pnpm** for better performance and disk efficiency.
-
-### Migrating from npm to pnpm
-
-#### Automatic Migration
-- **Windows**: Run `migrate-to-pnpm.bat`
-- **macOS/Linux**: Run `./migrate-to-pnpm.sh`
-
-#### Manual Migration
-```bash
-# Install pnpm globally
-npm install -g pnpm
-
-# Clean npm artifacts
-rm -rf node_modules package-lock.json
-
-# Install with pnpm
-pnpm install
-```
-
-### Why pnpm?
-- **Faster installs** - Links packages instead of copying
-- **Disk space efficient** - Shared package store
-- **Strict dependency resolution** - Better security
-- **Lockfile consistency** - Reliable builds
+Current capabilities include live Spotify overlays, viewer song submissions, role-aware dashboards, and theme editing. Upcoming work focuses on Twitch event ingestion, richer analytics, and customizable widgets.
 
 ---
 
-## 🔒 Security Features
+## Contributing
 
-- **JWT Authentication** - Tamper-proof tokens with expiration
-- **HttpOnly Cookies** - Protected from XSS attacks
-- **Role-based Access** - Moderator and admin permissions
-- **CSRF Protection** - Secure cookie settings
-- **Input Validation** - Sanitized user inputs
-- **Rate Limiting** - API abuse prevention (via Vercel)
+1. Fork the repository.
+2. Create a feature branch: `git checkout -b feature/your-feature`.
+3. Commit with a concise message.
+4. Push and open a pull request.
 
----
-
-## 🎯 Roadmap
-
-### Current Features ✅
-- Spotify integration with real-time overlays
-- Dynamic CSS theming system
-- Song request management
-- Secure JWT authentication
-- User role management
-- Beautiful modern UI
-
-### Coming Soon 🚧
-- **Twitch integration** - Events, chat commands, webhooks
-- **Advanced analytics** - Play counts, user statistics
-- **Custom widgets** - Follower goals, donation tracking
-- **Mobile app** - React Native companion
-- **Plugin system** - Third-party integrations
+Bug reports and feature ideas are welcome via GitHub issues.
 
 ---
 
-## 📄 License
+## License
 
-MIT License - see [LICENSE](LICENSE) file for details.
-
----
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
+Released under the MIT License. See [LICENSE](LICENSE) for the full text.
 
 ---
 
-## 💝 Support
+## Support
 
-If streamthing helped your streaming setup, consider:
-- ⭐ Starring the repository
-- 🐛 Reporting bugs and issues
-- 💡 Suggesting new features
-- 🔗 Sharing with other creators
-
----
-
-**Built with ❤️ by [Lawson Hart](https://github.com/oyuh) for the streaming community.**
+If streamthing improves your stream, consider starring the repo, filing issues, or sharing it with other creators.

@@ -1,7 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { FaUsers, FaSearch, FaUserShield, FaBan, FaHome, FaCrown } from 'react-icons/fa';
+import PageLayout from '@/components/dashboard/PageLayout';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  FaUsers,
+  FaSearch,
+  FaUserShield,
+  FaBan,
+  FaCrown,
+  FaSync,
+} from 'react-icons/fa';
 
 type User = {
   id: string;
@@ -15,227 +23,247 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const fetchUsers = async () => {
-    const res = await fetch('/api/users');
-    const data = await res.json();
-    setUsers(data);
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/users');
+      if (!res.ok) {
+        throw new Error('Failed to fetch users');
+      }
+      const data = await res.json();
+      setUsers(data);
+    } catch (err) {
+      console.error('Failed to fetch users', err);
+      setError('Unable to load users. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    fetchUsers();
+    void fetchUsers();
   }, []);
 
   const updateRole = async (id: string, updates: Partial<Pick<User, 'isModerator' | 'isBanned'>>) => {
     setError('');
-    const res = await fetch(`/api/users/${id}/role`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updates),
-    });
+    try {
+      const res = await fetch(`/api/users/${id}/role`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
 
-    if (res.ok) {
-      fetchUsers();
-    } else {
-      const data = await res.json();
-      setError(data.error || 'Failed to update user');
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || 'Failed to update user.');
+        return;
+      }
+
+      await fetchUsers();
+    } catch (err) {
+      console.error('Failed to update role', err);
+      setError('Server error while updating the user.');
     }
   };
 
-  const filteredUsers = users.filter(
-    (u) =>
-      u.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.id.includes(searchTerm)
-  );
+  const filteredUsers = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    if (!query) return users;
+
+    return users.filter((user) => {
+      return (
+        (user.username ?? '').toLowerCase().includes(query) ||
+        user.id.toLowerCase().includes(query)
+      );
+    });
+  }, [users, searchTerm]);
+
+  const stats = useMemo(() => ({
+    total: users.length,
+    streamers: users.filter((u) => u.isStreamer).length,
+    moderators: users.filter((u) => u.isModerator).length,
+    banned: users.filter((u) => u.isBanned).length,
+  }), [users]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-slate-900 to-black text-white">
-      {/* Header */}
-      <header className="bg-zinc-900/50 border-b border-zinc-700 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <FaUsers className="text-purple-400 text-2xl" />
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 via-blue-400 to-green-400 bg-clip-text text-transparent">
-                User Management
-              </h1>
-            </div>
-            <a
-              href="/"
-              className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded-lg transition"
-            >
-              <FaHome />
-              Back to Dashboard
-            </a>
-          </div>
+    <PageLayout
+      title="Users"
+      icon={FaUsers}
+      description="Manage roles"
+      actions={
+        <button
+          type="button"
+          onClick={() => void fetchUsers()}
+          disabled={loading}
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/50 text-zinc-400 transition hover:border-zinc-700 hover:text-white disabled:opacity-50"
+        >
+          <FaSync className={`text-xs ${loading ? 'animate-spin' : ''}`} />
+        </button>
+      }
+    >
+      {/* Search */}
+      <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 p-4">
+        <div className="relative">
+          <FaSearch className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500" />
+          <input
+            type="search"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Search by username or ID..."
+            className="w-full rounded border border-zinc-800 bg-black pl-9 pr-3 py-2 text-sm text-white placeholder-zinc-600 focus:border-zinc-700 focus:outline-none"
+          />
         </div>
-      </header>
+      </div>
 
-      {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-6 py-8">
-        {/* Search Bar */}
-        <div className="mb-8">
-          <div className="relative">
-            <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-zinc-400" />
-            <input
-              type="text"
-              placeholder="Search users by username or ID..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-zinc-800/50 border border-zinc-700 rounded-xl pl-12 pr-4 py-4 text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            />
+      {/* Stats */}
+      <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 p-4">
+          <div className="flex items-center gap-2 text-xs text-zinc-500">
+            <FaUsers className="text-[10px]" />
+            <span>Total</span>
           </div>
+          <p className="mt-2 text-2xl font-semibold text-white">{stats.total}</p>
         </div>
-
-        {/* Error Message */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-900/50 border border-red-700 rounded-xl">
-            <p className="text-red-300">{error}</p>
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 p-4">
+          <div className="flex items-center gap-2 text-xs text-zinc-500">
+            <FaCrown className="text-[10px]" />
+            <span>Streamers</span>
           </div>
-        )}
-
-        {/* Stats */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-zinc-800/50 border border-zinc-700 rounded-xl p-6">
-            <div className="flex items-center gap-3">
-              <FaUsers className="text-blue-400 text-xl" />
-              <div>
-                <h3 className="text-sm text-zinc-400">Total Users</h3>
-                <p className="text-2xl font-bold">{users.length}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-zinc-800/50 border border-zinc-700 rounded-xl p-6">
-            <div className="flex items-center gap-3">
-              <FaCrown className="text-yellow-400 text-xl" />
-              <div>
-                <h3 className="text-sm text-zinc-400">Streamers</h3>
-                <p className="text-2xl font-bold">{users.filter(u => u.isStreamer).length}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-zinc-800/50 border border-zinc-700 rounded-xl p-6">
-            <div className="flex items-center gap-3">
-              <FaUserShield className="text-green-400 text-xl" />
-              <div>
-                <h3 className="text-sm text-zinc-400">Moderators</h3>
-                <p className="text-2xl font-bold">{users.filter(u => u.isModerator).length}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-zinc-800/50 border border-zinc-700 rounded-xl p-6">
-            <div className="flex items-center gap-3">
-              <FaBan className="text-red-400 text-xl" />
-              <div>
-                <h3 className="text-sm text-zinc-400">Banned Users</h3>
-                <p className="text-2xl font-bold">{users.filter(u => u.isBanned).length}</p>
-              </div>
-            </div>
-          </div>
+          <p className="mt-2 text-2xl font-semibold text-white">{stats.streamers}</p>
         </div>
-        {/* Users Table */}
-        <div className="bg-zinc-800/50 border border-zinc-700 rounded-xl overflow-hidden">
-          <div className="p-6 border-b border-zinc-700">
-            <h2 className="text-xl font-semibold">All Users</h2>
-            <p className="text-zinc-400 text-sm mt-1">Manage user roles and permissions</p>
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 p-4">
+          <div className="flex items-center gap-2 text-xs text-zinc-500">
+            <FaUserShield className="text-[10px]" />
+            <span>Moderators</span>
           </div>
+          <p className="mt-2 text-2xl font-semibold text-white">{stats.moderators}</p>
+        </div>
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 p-4">
+          <div className="flex items-center gap-2 text-xs text-zinc-500">
+            <FaBan className="text-[10px]" />
+            <span>Banned</span>
+          </div>
+          <p className="mt-2 text-2xl font-semibold text-white">{stats.banned}</p>
+        </div>
+      </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-zinc-900/50">
-                <tr>
-                  <th className="text-left px-6 py-4 font-medium text-zinc-300">Username</th>
-                  <th className="text-left px-6 py-4 font-medium text-zinc-300">Discord ID</th>
-                  <th className="text-center px-6 py-4 font-medium text-zinc-300">Role</th>
-                  <th className="text-center px-6 py-4 font-medium text-zinc-300">Status</th>
-                  <th className="text-center px-6 py-4 font-medium text-zinc-300">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredUsers.map((user) => (
-                  <tr key={user.id} className="border-t border-zinc-700 hover:bg-zinc-800/30 transition">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-sm font-bold">
-                          {(user.username || 'U')[0].toUpperCase()}
-                        </div>
-                        <span className="font-medium">{user.username || 'Unknown User'}</span>
+      {/* Error */}
+      {error ? (
+        <div className="mt-6 rounded-lg border border-red-900 bg-red-950/30 p-3 text-sm text-red-400">
+          {error}
+        </div>
+      ) : null}
+
+      {/* Users table */}
+      <div className="mt-6 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/30">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-zinc-800 text-xs text-zinc-500">
+                <th className="px-4 py-3 text-left font-medium">User</th>
+                <th className="px-4 py-3 text-left font-medium">ID</th>
+                <th className="px-4 py-3 text-center font-medium">Role</th>
+                <th className="px-4 py-3 text-center font-medium">Status</th>
+                <th className="px-4 py-3 text-center font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredUsers.map((user) => (
+                <tr key={user.id} className="border-b border-zinc-800 last:border-0">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-800 text-xs font-medium text-white">
+                        {(user.username || 'U')[0].toUpperCase()}
                       </div>
-                    </td>
-                    <td className="px-6 py-4 text-zinc-400 font-mono text-sm">{user.id}</td>
-                    <td className="px-6 py-4 text-center">
-                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                      <span className="text-sm font-medium text-white">{user.username || 'Unknown'}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 font-mono text-xs text-zinc-500">{user.id}</td>
+                  <td className="px-4 py-3 text-center">
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded border px-2 py-0.5 text-xs ${
                         user.isStreamer
-                          ? 'bg-yellow-900/50 text-yellow-400 border border-yellow-700'
+                          ? 'border-yellow-900 bg-yellow-950/30 text-yellow-400'
                           : user.isModerator
-                          ? 'bg-green-900/50 text-green-400 border border-green-700'
-                          : 'bg-zinc-800/50 text-zinc-400 border border-zinc-700'
-                      }`}>
-                        {user.isStreamer ? (
-                          <><FaCrown className="w-3 h-3" /> Streamer</>
-                        ) : user.isModerator ? (
-                          <><FaUserShield className="w-3 h-3" /> Moderator</>
-                        ) : (
-                          'User'
-                        )}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                          ? 'border-green-900 bg-green-950/30 text-green-400'
+                          : 'border-zinc-800 bg-black text-zinc-500'
+                      }`}
+                    >
+                      {user.isStreamer ? (
+                        <>
+                          <FaCrown className="text-[9px]" /> Streamer
+                        </>
+                      ) : user.isModerator ? (
+                        <>
+                          <FaUserShield className="text-[9px]" /> Moderator
+                        </>
+                      ) : (
+                        'Viewer'
+                      )}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded border px-2 py-0.5 text-xs ${
                         user.isBanned
-                          ? 'bg-red-900/50 text-red-400 border border-red-700'
-                          : 'bg-green-900/50 text-green-400 border border-green-700'
-                      }`}>
-                        {user.isBanned ? <><FaBan className="w-3 h-3" /> Banned</> : 'Active'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
+                          ? 'border-red-900 bg-red-950/30 text-red-400'
+                          : 'border-green-900 bg-green-950/30 text-green-400'
+                      }`}
+                    >
+                      {user.isBanned ? (
+                        <>
+                          <FaBan className="text-[9px]" /> Banned
+                        </>
+                      ) : (
+                        'Active'
+                      )}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {user.isStreamer ? (
+                      <div className="text-center text-xs text-zinc-600">Protected</div>
+                    ) : (
                       <div className="flex items-center justify-center gap-2">
-                        {user.isStreamer ? (
-                          <div className="text-xs text-zinc-500 bg-zinc-800/50 px-3 py-1 rounded-lg border border-zinc-700">
-                            Protected Account
-                          </div>
-                        ) : (
-                          <>
-                            <button
-                              onClick={() => updateRole(user.id, { isModerator: !user.isModerator })}
-                              className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium transition ${
-                                user.isModerator
-                                  ? 'bg-orange-600 hover:bg-orange-700 text-white'
-                                  : 'bg-green-600 hover:bg-green-700 text-white'
-                              }`}
-                            >
-                              <FaUserShield className="w-3 h-3" />
-                              {user.isModerator ? 'Demote' : 'Promote'}
-                            </button>
-                            <button
-                              onClick={() => updateRole(user.id, { isBanned: !user.isBanned })}
-                              className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium transition ${
-                                user.isBanned
-                                  ? 'bg-green-600 hover:bg-green-700 text-white'
-                                  : 'bg-red-600 hover:bg-red-700 text-white'
-                              }`}
-                            >
-                              <FaBan className="w-3 h-3" />
-                              {user.isBanned ? 'Unban' : 'Ban'}
-                            </button>
-                          </>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => void updateRole(user.id, { isModerator: !user.isModerator })}
+                          className={`rounded border px-2 py-1 text-xs transition ${
+                            user.isModerator
+                              ? 'border-orange-900 bg-orange-950/30 text-orange-400 hover:border-orange-700'
+                              : 'border-green-900 bg-green-950/30 text-green-400 hover:border-green-700'
+                          }`}
+                        >
+                          {user.isModerator ? 'Demote' : 'Promote'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void updateRole(user.id, { isBanned: !user.isBanned })}
+                          className={`rounded border px-2 py-1 text-xs transition ${
+                            user.isBanned
+                              ? 'border-green-900 bg-green-950/30 text-green-400 hover:border-green-700'
+                              : 'border-red-900 bg-red-950/30 text-red-400 hover:border-red-700'
+                          }`}
+                        >
+                          {user.isBanned ? 'Unban' : 'Ban'}
+                        </button>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
-            {filteredUsers.length === 0 && (
-              <div className="p-8 text-center text-zinc-400">
-                <p>No users found matching your search.</p>
-              </div>
-            )}
-          </div>
+          {filteredUsers.length === 0 ? (
+            <div className="py-12 text-center text-sm text-zinc-500">
+              No users found
+            </div>
+          ) : null}
         </div>
-      </main>
-    </div>
+      </div>
+    </PageLayout>
   );
 }

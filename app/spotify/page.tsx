@@ -407,7 +407,7 @@ export default function SpotifyOverlay() {
               <AutoScrollText
                 elementId="artist"
                 text={track.artist}
-                cutoffAt="," 
+                cutoffAt=","
                 style={{ color: 'var(--artist-accent)' }}
               />
               <div id="progressTime">
