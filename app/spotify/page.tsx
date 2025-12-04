@@ -1,6 +1,7 @@
  'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import type { CSSProperties } from 'react';
 
 const fetchTrack = async () => {
@@ -8,8 +9,12 @@ const fetchTrack = async () => {
   return res.json();
 };
 
-const fetchActiveTheme = async () => {
-  const res = await fetch('/api/spotify/themes?active=true');
+const fetchTheme = async (themeId?: string | null) => {
+  const url = themeId
+    ? `/api/spotify/themes/${themeId}`
+    : '/api/spotify/themes?active=true';
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Failed to fetch theme');
   return res.json();
 };
 
@@ -227,12 +232,9 @@ function cleanTitle(title: string): string {
   return t;
 }
 
-function clampText(text: string, maxChars: number): string {
-  if (!text) return text;
-  return text.length > maxChars ? text.slice(0, Math.max(0, maxChars - 1)) + '…' : text;
-}
-
 export default function SpotifyOverlay() {
+  const searchParams = useSearchParams();
+  const themeId = searchParams.get('theme');
   const [track, setTrack] = useState<any | null>(null);
   const [lastTrack, setLastTrack] = useState('');
   const [show, setShow] = useState(false);
@@ -244,10 +246,10 @@ export default function SpotifyOverlay() {
   const fallbackCSS = `#nowPlaying { --artist-accent: #9ca3af; display:flex; align-items:center; gap:10px; color:#e5e7eb; font-family:'Segoe UI', system-ui, -apple-system, sans-serif; padding:10px 12px; border-radius:10px; background:rgba(0,0,0,0.35); box-shadow:0 4px 18px rgba(0,0,0,0.45); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); transition:opacity .4s ease } #albumArt{ height:40px; width:40px; object-fit:cover; border-radius:9px; box-shadow:0 4px 12px rgba(0,0,0,.6) } #info{ display:flex; flex-direction:column } #track{ font-size:15px; line-height:1.1; font-weight:700; text-shadow:0 1px 3px rgba(0,0,0,.65); color:#f9fafb } #artist{ margin-top:2px; font-size:13px; line-height:1; color:var(--artist-accent); text-shadow:0 1px 2px rgba(0,0,0,.5) } #progressTime{ margin-top:3px; font-size:11px; letter-spacing:.2px; color:#94a3b8; opacity:.9; text-shadow:0 1px 2px rgba(0,0,0,.4) }`;
 
   useEffect(() => {
-    // Fetch the active theme
+    // Fetch the active theme or specific theme from params
     const loadTheme = async () => {
       try {
-        const theme = await fetchActiveTheme();
+        const theme = await fetchTheme(themeId);
         setActiveTheme(theme);
       } catch (error) {
         console.error('Failed to load theme:', error);
@@ -255,7 +257,7 @@ export default function SpotifyOverlay() {
     };
 
     loadTheme();
-  }, []);
+  }, [themeId]);
 
   useEffect(() => {
     const poll = setInterval(async () => {

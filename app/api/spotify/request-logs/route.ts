@@ -34,7 +34,7 @@ export async function GET() {
     // Delete logs older than 7 days
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    
+
     await db
       .delete(requestLogs)
       .where(lt(requestLogs.createdAt, sevenDaysAgo));

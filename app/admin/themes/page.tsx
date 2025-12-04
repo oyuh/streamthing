@@ -10,6 +10,7 @@ import {
   FaCheck,
   FaPalette,
   FaSync,
+  FaLink,
 } from 'react-icons/fa';
 
 interface Theme {
@@ -224,6 +225,25 @@ export default function ThemeEditor() {
     }
   };
 
+  const handleCopyLink = (theme: Theme) => {
+    const url = `${window.location.origin}/spotify?theme=${theme.id}`;
+    navigator.clipboard.writeText(url).then(() => {
+      // Could add a toast here, but for now just log or maybe set a temporary success state
+      // Using the error state for a quick success message hack or just rely on user knowing it worked
+      // Let's just alert for now or maybe use a temporary text change on the button if I could
+      // Actually, let's just use the error banner for success messages too but style it differently?
+      // Or just a simple alert since we don't have a toast system handy in this file
+      // Let's try to be cleaner and maybe just console log, but user needs feedback.
+      // I'll add a temporary "Copied!" state to the button if I can, but that's complex for a list.
+      // I'll just use window.alert for simplicity as requested "add a button... for copying that link"
+      // Wait, user said "stop using browser dialogs please" earlier.
+      // I should probably not use alert.
+      // I'll add a simple "Link copied to clipboard" message in the error/status area.
+      setError('Link copied to clipboard!');
+      setTimeout(() => setError(''), 3000);
+    });
+  };
+
   return (
     <PageLayout
       title="Themes"
@@ -252,7 +272,11 @@ export default function ThemeEditor() {
       contentWidth="xl"
     >
       {error ? (
-        <div className="mb-4 rounded-lg border border-red-900 bg-red-950/30 p-3 text-sm text-red-400">
+        <div className={`mb-4 rounded-lg border p-3 text-sm ${
+          error === 'Link copied to clipboard!'
+            ? 'border-green-900 bg-green-950/30 text-green-400'
+            : 'border-red-900 bg-red-950/30 text-red-400'
+        }`}>
           {error}
         </div>
       ) : null}
@@ -328,7 +352,18 @@ export default function ThemeEditor() {
                       type="button"
                       onClick={(event) => {
                         event.stopPropagation();
-                        window.open('/spotify', '_blank');
+                        handleCopyLink(theme);
+                      }}
+                      className="flex h-5 w-5 items-center justify-center rounded border border-zinc-800 bg-black text-zinc-500 transition hover:border-zinc-700 hover:text-white"
+                      title="Copy Link"
+                    >
+                      <FaLink className="text-[8px]" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        window.open(`/spotify?theme=${theme.id}`, '_blank');
                       }}
                       className="flex h-5 w-5 items-center justify-center rounded border border-zinc-800 bg-black text-zinc-500 transition hover:border-zinc-700 hover:text-white"
                       title="Preview"
@@ -385,7 +420,15 @@ export default function ThemeEditor() {
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={() => window.open('/spotify', '_blank')}
+                    onClick={() => handleCopyLink(currentTheme)}
+                    className="flex h-8 items-center gap-2 rounded border border-zinc-800 bg-black px-3 text-xs text-zinc-400 transition hover:border-zinc-700 hover:text-white"
+                  >
+                    <FaLink className="text-[10px]" />
+                    Copy Link
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => window.open(`/spotify?theme=${currentTheme.id}`, '_blank')}
                     className="flex h-8 items-center gap-2 rounded border border-zinc-800 bg-black px-3 text-xs text-zinc-400 transition hover:border-zinc-700 hover:text-white"
                   >
                     <FaEye className="text-[10px]" />

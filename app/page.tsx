@@ -33,7 +33,7 @@ export default function Home() {
           const data = await res.json();
           if (data?.username) {
             setDiscordUser(data);
-            
+
             // Fetch current track if user is moderator
             if (data.isModerator || data.isStreamer) {
               try {

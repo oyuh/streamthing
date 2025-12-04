@@ -110,8 +110,8 @@ export async function PATCH(req: NextRequest) {
         if (existingUser) {
           // Check if user is a streamer (protected)
           if (existingUser.isStreamer) {
-            return NextResponse.json({ 
-              error: 'Cannot ban streamer account' 
+            return NextResponse.json({
+              error: 'Cannot ban streamer account'
             }, { status: 403 });
           }
 

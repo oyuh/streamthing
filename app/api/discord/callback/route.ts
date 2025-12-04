@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
     const existing = await db.select().from(userRoles).where(eq(userRoles.id, user.id)).limit(1);
     if (existing.length > 0) {
       // Update existing user, preserve existing roles unless they're the streamer
-      const updateData: any = { 
+      const updateData: any = {
         username: user.username,
         avatar: user.avatar || null,
       };
