@@ -1,6 +1,6 @@
  'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import type { CSSProperties } from 'react';
 
@@ -232,7 +232,7 @@ function cleanTitle(title: string): string {
   return t;
 }
 
-export default function SpotifyOverlay() {
+function SpotifyOverlayContent() {
   const searchParams = useSearchParams();
   const themeId = searchParams.get('theme');
   const [track, setTrack] = useState<any | null>(null);
@@ -472,5 +472,13 @@ export default function SpotifyOverlay() {
         )}
       </div>
     </>
+  );
+}
+
+export default function SpotifyOverlay() {
+  return (
+    <Suspense fallback={null}>
+      <SpotifyOverlayContent />
+    </Suspense>
   );
 }
